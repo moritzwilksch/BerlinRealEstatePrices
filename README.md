@@ -1,4 +1,4 @@
-# BerlinRealEstatePrices 🏡
+# BerlinRealEstatePrices 🏡 <img width=90 align="right" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_logo.svg/1024px-Duke_University_logo.svg.png">
 Statistical analysis of Berlin real estate prices for [IDS702 class](https://ids702-f21.olanrewajuakande.com) @ Duke University.
 
 > **Research Question**  
