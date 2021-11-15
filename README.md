@@ -1,5 +1,5 @@
 # BerlinRealEstatePrices 🏡
-Statistical analysis of Berlin real estate prices for IDS702 class @ Duke University.
+Statistical analysis of Berlin real estate prices for [IDS702 class](https://ids702-f21.olanrewajuakande.com) @ Duke University.
 
 > **Research Question**  
 > Which factors influence listing prices of Berlin real estate?
