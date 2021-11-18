@@ -4,20 +4,16 @@ library(ggplot2)
 library(lme4)
 library(lattice)
 
-dfall = read_parquet("data/berlin_clean.parquet")
+dfrent = read_parquet("data/dfrent.parquet")
+dfbuy = read_parquet("data/dfbuy.parquet")
 
-dfrent = dfall %>% filter(to_rent == TRUE & ! object_type %in% c("HOLIDAY_HOUSE_APARTMENT", "HOUSE"))
-dfrent$object_type = droplevel(dfrent$object_type)
-
-dfbuy = dfall %>% filter(to_rent == FALSE & ! object_type %in% c("HOLIDAY_HOUSE_APARTMENT", "SHARED_APARTMENT"))
-
-rent_cutoff = quantile(dfrent$price, 0.98)
-buy_cutoff = quantile(dfbuy$price, 0.99)
-dfrent = dfrent %>% filter(price <= rent_cutoff)
-dfbuy = dfbuy %>% filter(price <= buy_cutoff)
+#rent_cutoff = quantile(dfrent$price, 0.99)
+#buy_cutoff = quantile(dfbuy$price, 0.99)
+#dfrent = dfrent %>% filter(price <= rent_cutoff)
+#dfbuy = dfbuy %>% filter(price <= buy_cutoff)
 
 # Rent prices
-ggplot(data=dfrent, aes(x=log(price))) + geom_histogram(bins=60) + theme_bw()  # some zeros
+ggplot(data=dfrent, aes(x=price)) + geom_histogram(bins=60) + theme_bw()  # some zeros
 
 # Buy prices
 ggplot(data=dfbuy, aes(x=price)) + geom_histogram(bins=60) + theme_bw() # many zeros

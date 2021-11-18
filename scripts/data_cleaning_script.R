@@ -14,14 +14,14 @@ df$square_meters = df$square_meters / 100  # is now m^2
 df$price = df$price / 100  # is now EUR
 
 ###### Explicit NA Values ######
-colSums(is.na(df), 0)  # ~36 rooms missing
+colSums(is.na(df), 0)  # ~10k rooms missing
 
 ###### Implicit NA Values ######
 # Private Offer
 table(df$private_offer) # No NAs
 
 # Square Meters
-sum(df$square_meters == 0)  # 121 with 0 sqm size
+sum(df$square_meters == 0)  # ~5k with 0 sqm size
 df$square_meters[df$square_meters == 0] = NA  # make explicit
 
 ###### General EDA ######
@@ -44,6 +44,9 @@ ggplot(data=df %>% filter(square_meters < 1000), aes(x=square_meters)) + geom_hi
 quantile_cutoff = quantile(df$square_meters, 0.99, na.rm=T) # remove top 1% of outliers
 ggplot(data=df %>% filter(square_meters < quantile_cutoff), aes(x=square_meters)) + geom_histogram(bins=60) + theme_bw()
 
+# Also excludes some of the price outliers
+ggplot(data=df %>% filter(square_meters < quantile_cutoff), aes(x=price)) + geom_histogram(bins=60) + theme_bw()
+
 ### Rent/Buy
 table(df$to_rent)
 dfrent = df %>% filter(to_rent==TRUE)
@@ -52,13 +55,13 @@ dfbuy = df %>% filter(to_rent==FALSE)
 
 # make explicit
 df[df$price == 0, "price"] = NA
-df = df %>% filter(price >= 100)  # everything below 100EUR can be considered a data entry error or a "per sqm" price
+df = df %>% filter(price >= 100)  # everything below 100EUR rent can be considered a data entry error or a "per sqm" price
 
 ### Price
 ggplot(data=df, aes(x=price)) + geom_histogram(bins=60) + theme_bw()+ facet_wrap(~to_rent)
 # rent distribution highly skewed (potentially includes properties to buy)
 
-rent_cutoff = quantile(dfrent$price, 0.97)
+rent_cutoff = quantile(dfrent$price, 0.99)
 buy_cutoff = quantile(dfbuy$price, 0.99)
 dfrent = dfrent %>% filter(price <= rent_cutoff)
 dfbuy = dfbuy %>% filter(price <= buy_cutoff)
@@ -74,8 +77,8 @@ table(df$private_offer, df$to_rent)  # fewer private offers than non-private
 
 ### Rooms
 tab = table(df$rooms)  # numerics (whole and decimal numbers) and text ("single room" [Einzelzimmer], "NA" [k.A.])
-tab[tab > 1]
-df[df$rooms %in% c("Zimmer k.A.", "k.A. Zimmer", "0"), "rooms"] = NA
+tab[tab > 1]  # only regard categories that occur multiple times
+df[df$rooms %in% c("Zimmer k.A.", "k.A. Zimmer", "0"), "rooms"] = NA  # k.A. = keine Angabe = not given
 
 # Exclude anything with more than 5 rooms or anything that only occurs once
 df = df %>% filter(rooms %in% names(tab[tab > 1]))
@@ -92,13 +95,14 @@ df$rooms = droplevels(df$rooms)
 ggplot(df, aes(x=rooms)) + geom_bar() + theme_bw()
 
 ### Square Meters
-sqm_cutoff = quantile(df$square_meters, 0.99, na.rm=T)
+#sqm_cutoff = quantile(df$square_meters, 0.99, na.rm=T)
 df = df %>% filter(square_meters <= sqm_cutoff)
 ggplot(df, aes(x=square_meters)) + geom_histogram() + theme_bw()
 
 
 ### ZIP Code
-table(df$zip_code)
+table(df$zip_code)  # some zips without data...
+df$zip_code = droplevels(df$zip_code)
 
 write_parquet(df, "data/berlin_clean.parquet")
 
