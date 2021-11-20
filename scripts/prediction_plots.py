@@ -91,8 +91,16 @@ merged = merged.assign(
 
 #%%
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib_scalebar.scalebar import ScaleBar
 
-fig, ax = plt.subplots(figsize=(17, 10))
+fig, ax = plt.subplots(figsize=(15, 10))
+merged = merged.to_crs(4326)
+
+from shapely.geometry.point import Point
+
+points = gpd.GeoSeries([Point(-73.5, 40.5), Point(-74.5, 40.5)], crs=4326)  # Geographic WGS 84 - degrees
+points = points.to_crs(32619) # Projected WGS 84 - meters
+distance_meters = points[0].distance(points[1])
 
 merged.plot(
     column="pointestimate_sig",
@@ -109,4 +117,7 @@ ax.set_xticks(())
 ax.set_yticks(())
 ax.set_title("Random Slope by ZIP Code", weight="bold")
 sns.despine(left=True, bottom=True)
+
+ax.add_artist(ScaleBar(distance_meters, location="lower left"))
+plt.tight_layout()
 plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
