@@ -64,7 +64,9 @@ df_dotplot["zip"] = df_dotplot["zip"].astype("category")
 
 df_dotplot
 
+
 #%%
+################# Geo Plot #####################
 import geopandas as gpd
 
 geodf = gpd.read_file(ROOT_DIR + "data/plz.geojson")
@@ -88,16 +90,28 @@ merged = merged.assign(
     pointestimate_sig=merged.apply(lambda row: is_sig(row["pointestimate"], row["err"]), axis=1)
 )
 
+#%%
+streets = gpd.read_file("../../../brb_geo/gis_osm_roads_free_1.shp")
+
+#%%
+fclasses = [
+    "motorway",
+    "motorway_link",
+    "primary",
+    "secondary",
+    "tertiary",
+]
+
+streets = streets.query("fclass.isin(@fclasses)")
 
 #%%
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib_scalebar.scalebar import ScaleBar
 
-fig, ax = plt.subplots(figsize=(15, 10))
+fig, ax = plt.subplots(figsize=(15, 9))
 merged = merged.to_crs(4326)
 
 from shapely.geometry.point import Point
-
 
 
 merged.plot(
@@ -113,7 +127,7 @@ ax.set_xticklabels(())
 ax.set_yticklabels(())
 ax.set_xticks(())
 ax.set_yticks(())
-ax.set_title("Random Slope by ZIP Code", weight="bold")
+ax.set_title("Random Slope by Zip Code", weight="bold", size=20, family="Arial")
 sns.despine(left=True, bottom=True)
 
 # Scalebar - Need to calculate ratio from pixels to real world
@@ -124,4 +138,8 @@ ax.add_artist(ScaleBar(distance_meters, location="lower left"))
 
 plt.tight_layout()
 fig.colorbar(ax.collections[0], ax=ax, label="Random Slope", shrink=0.5)
+
+streets.plot(color="0.8", ax=ax, zorder=-1)
+ax.set_xlim(13, 13.8)
+ax.set_ylim(52.3, 52.7)
 plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
