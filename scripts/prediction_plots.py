@@ -89,14 +89,20 @@ merged = merged.assign(
 )
 
 
-
 #%%
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 fig, ax = plt.subplots(figsize=(17, 10))
 
-merged.plot(column="pointestimate_sig", ax=ax, edgecolor="black", linewidth=0.75, legend=True, missing_kwds={"color": "0.8", "hatch": "..."})
-home.plot(ax=ax, color="red", marker='*', markersize=125)
+merged.plot(
+    column="pointestimate_sig",
+    ax=ax,
+    edgecolor="black",
+    linewidth=0.75,
+    legend=True,
+    missing_kwds={"color": "0.95", "hatch": "..."},
+)
+home.plot(ax=ax, color="red", marker="*", markersize=125)
 ax.set_xticklabels(())
 ax.set_yticklabels(())
 ax.set_xticks(())
