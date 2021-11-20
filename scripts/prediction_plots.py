@@ -98,16 +98,14 @@ merged = merged.to_crs(4326)
 
 from shapely.geometry.point import Point
 
-points = gpd.GeoSeries([Point(-73.5, 40.5), Point(-74.5, 40.5)], crs=4326)  # Geographic WGS 84 - degrees
-points = points.to_crs(32619) # Projected WGS 84 - meters
-distance_meters = points[0].distance(points[1])
+
 
 merged.plot(
     column="pointestimate_sig",
     ax=ax,
     edgecolor="black",
     linewidth=0.75,
-    legend=True,
+    # legend=True,
     missing_kwds={"color": "0.95", "hatch": "..."},
 )
 home.plot(ax=ax, color="red", marker="*", markersize=125)
@@ -118,6 +116,12 @@ ax.set_yticks(())
 ax.set_title("Random Slope by ZIP Code", weight="bold")
 sns.despine(left=True, bottom=True)
 
+# Scalebar - Need to calculate ratio from pixels to real world
+points = gpd.GeoSeries([Point(-73.5, 40.5), Point(-74.5, 40.5)], crs=4326)
+points = points.to_crs(32619)
+distance_meters = points[0].distance(points[1])
 ax.add_artist(ScaleBar(distance_meters, location="lower left"))
+
 plt.tight_layout()
+fig.colorbar(ax.collections[0], ax=ax, label="Random Slope", shrink=0.5)
 plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
