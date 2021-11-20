@@ -91,7 +91,9 @@ merged = merged.assign(
 )
 
 #%%
-streets = gpd.read_file("../../../brb_geo/gis_osm_roads_free_1.shp")
+BBOX = (13.0, 52.3, 13.8, 52.7)
+
+streets = gpd.read_file("../../../brb_geo/gis_osm_roads_free_1.shp", bbox=BBOX)
 
 #%%
 fclasses = [
@@ -142,4 +144,5 @@ fig.colorbar(ax.collections[0], ax=ax, label="Random Slope", shrink=0.5)
 streets.plot(color="0.8", ax=ax, zorder=-1)
 ax.set_xlim(13, 13.8)
 ax.set_ylim(52.3, 52.7)
+
 plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
