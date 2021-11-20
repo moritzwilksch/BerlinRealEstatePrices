@@ -85,9 +85,10 @@ anova(model1, model0)
 
 model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
 summary(model2)
+# xtable(coef(summary(model2)))
 
 
-anova(model2, model)
+anova(model2, model1)
 dotplot(ranef(model2))
 
 ranef(model2)$zip_code
