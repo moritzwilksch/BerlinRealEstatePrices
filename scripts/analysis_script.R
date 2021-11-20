@@ -99,7 +99,10 @@ ranef(model2)$zip_code
 
 x = ranef(model2, condVar=TRUE)$zip_code
 xdf = data.frame(pointest=ranef(model2, condVar=TRUE)$zip_code, err=as.vector(sqrt(attr(x, "postVar"))))
-
+xdf$pointestimate = xdf$X.Intercept.
+xdf$zip = rownames(xdf)
+xdf$X.Intercept. = NULL
+write_parquet(xdf, "data/intermediaries/ranef_by_zipcode.parquet")
 
 
 
