@@ -57,11 +57,50 @@ plt.savefig(ROOT_DIR + "documents/plots/predplot_rooms_objtype.png", dpi=300, fa
 
 #%%
 #################### Random Effects by ZIP ####################
-df_dotplot = pd.read_parquet(
-    "../data/intermediaries/ranef_by_zipcode.parquet"
-).sort_values(by="pointestimate")
+df_dotplot = pd.read_parquet("../data/intermediaries/ranef_by_zipcode.parquet").sort_values(
+    by="pointestimate"
+)
 df_dotplot["zip"] = df_dotplot["zip"].astype("category")
 
 df_dotplot
 
 #%%
+import geopandas as gpd
+
+geodf = gpd.read_file(ROOT_DIR + "data/plz.geojson")
+home = gpd.read_file(ROOT_DIR + "data/home.geojson")
+
+#%%
+
+merged = pd.merge(geodf.rename({"plz": "zip"}, axis=1), df_dotplot, on="zip", how="left")
+
+
+def is_sig(pointestimate, err):
+    if pointestimate < 0 and pointestimate + err >= 0:
+        return np.nan
+    elif pointestimate > 0 and pointestimate - err <= 0:
+        return np.nan
+    else:
+        return pointestimate
+
+
+merged = merged.assign(
+    pointestimate_sig=merged.apply(lambda row: is_sig(row["pointestimate"], row["err"]), axis=1)
+)
+
+
+
+#%%
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+fig, ax = plt.subplots(figsize=(17, 10))
+
+merged.plot(column="pointestimate_sig", ax=ax, edgecolor="black", linewidth=0.75, legend=True, missing_kwds={"color": "0.8", "hatch": "..."})
+home.plot(ax=ax, color="red", marker='*', markersize=125)
+ax.set_xticklabels(())
+ax.set_yticklabels(())
+ax.set_xticks(())
+ax.set_yticks(())
+ax.set_title("Random Slope by ZIP Code", weight="bold")
+sns.despine(left=True, bottom=True)
+plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
