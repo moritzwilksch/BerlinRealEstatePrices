@@ -61,16 +61,16 @@ df = df %>% filter(price >= 100)  # everything below 100EUR rent can be consider
 ggplot(data=df, aes(x=price)) + geom_histogram(bins=60) + theme_bw()+ facet_wrap(~to_rent)
 # rent distribution highly skewed (potentially includes properties to buy)
 
-rent_cutoff = quantile(dfrent$price, 0.99)
-buy_cutoff = quantile(dfbuy$price, 0.99)
-dfrent = dfrent %>% filter(price <= rent_cutoff)
-dfbuy = dfbuy %>% filter(price <= buy_cutoff)
+# rent_cutoff = quantile(dfrent$price, 0.99)
+# buy_cutoff = quantile(dfbuy$price, 0.99)
+# dfrent = dfrent %>% filter(price <= rent_cutoff)
+# dfbuy = dfbuy %>% filter(price <= buy_cutoff)
 
 # Rent prices
-ggplot(data=dfrent, aes(x=price)) + geom_histogram(bins=60) + theme_bw()  # some zeros
+#ggplot(data=dfrent, aes(x=price)) + geom_histogram(bins=60) + theme_bw()  # some zeros
 
 # Buy prices
-ggplot(data=dfbuy, aes(x=price)) + geom_histogram(bins=60) + theme_bw() # many zeros
+#ggplot(data=dfbuy, aes(x=price)) + geom_histogram(bins=60) + theme_bw() # many zeros
 
 ### Private offer
 table(df$private_offer, df$to_rent)  # fewer private offers than non-private
@@ -96,7 +96,7 @@ ggplot(df, aes(x=rooms)) + geom_bar() + theme_bw()
 
 ### Square Meters
 #sqm_cutoff = quantile(df$square_meters, 0.99, na.rm=T)
-df = df %>% filter(square_meters <= sqm_cutoff)
+# df = df %>% filter(square_meters <= sqm_cutoff)
 ggplot(df, aes(x=square_meters)) + geom_histogram() + theme_bw()
 
 
