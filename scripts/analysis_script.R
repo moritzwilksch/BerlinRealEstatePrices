@@ -23,7 +23,7 @@ dfrent = dfrent %>% filter(square_meters <= dfrent_cutoff)
 dfbuy = dfbuy %>% filter(square_meters <= dfbuy_cutoff)
 
 # Rent prices
-ggplot(data=dfrent, aes(x=price)) + geom_histogram(bins=60) + theme_bw()  # some zeros
+ggplot(data=dfrent, aes(x=log(price))) + geom_histogram(bins=60) + theme_bw()  # some zeros
 
 # Buy prices
 ggplot(data=dfbuy, aes(x=price)) + geom_histogram(bins=60) + theme_bw() # many zeros
@@ -42,21 +42,36 @@ ggplot(data=dfrent, aes(x=square_meters, y=price)) + geom_point(alpha=0.5) + geo
 
 
 ################### Modelling - Non-hierarchical ###################
-model0 = lm(ppsqm ~ object_type + private_offer + rooms + square_meters, data=dfrent)
+# all mean effects
+model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=dfrent)
 summary(model0)
-
 plot(model0)
 
-compdf = data.frame(ytrue=dfrent$price, yhat=exp(predict(model0, dfrent)))
-ggplot(data=compdf, aes(x=ytrue, y=yhat)) + geom_point(alpha=0.1)
 
+plot(model0, which=4) # high cooks dist for 21527, 19074, 19565
 
+high_dist = c(21527, 19074, 19565)
+problematic = c(9841, 13702, 16558)
 
-model1 = lm(price ~ object_type + private_offer + rooms * square_meters, data=dfrent)
+# refit
+leverage_removed = dfrent[-high_dist, ]
+leverage_removed = leverage_removed[-problematic, ]
+
+write_parquet(leverage_removed, "data/intermediaries/leverage_removed.parquet")
+model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=leverage_removed)
+summary(model0)
+plot(model0)
+
+# compdf = data.frame(ytrue=dfrent$price, yhat=exp(predict(model0, dfrent)))
+# ggplot(data=compdf, aes(x=ytrue, y=yhat)) + geom_point(alpha=0.1)
+
+# room x sqm interaction
+model1 = lm(log(price) ~ object_type + private_offer + rooms * square_meters, data=leverage_removed)
 summary(model1)
+plot(model1)
 
 
-
+anova(model1, model0)
 
 
 
@@ -68,7 +83,7 @@ summary(model1)
 ################### Modelling - Hierarchical ###################
 
 
-model2 = lmer(price ~ object_type + private_offer + rooms + square_meters + (1 | zip_code), data=dfrent)
+model2 = lmer(price ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
 summary(model2)
 
 #%%
@@ -79,6 +94,11 @@ table(dfrent$object_type)
 
 anova(model2, model)
 dotplot(ranef(model2))
+
+ranef(model2)$zip_code
+
+x = ranef(model2, condVar=TRUE)$zip_code
+xdf = data.frame(pointest=ranef(model2, condVar=TRUE)$zip_code, err=as.vector(sqrt(attr(x, "postVar"))))
 
 
 
@@ -91,20 +111,20 @@ dotplot(ranef(model2))
 
 
 ######## EXPERIMENT: PREDICTING PPSQM ###########
-dfrent = dfrent %>% filter(ppsqm <= quantile(dfrent$ppsqm, 0.99))
-ggplot(data=dfrent, aes(x=ppsqm)) + geom_histogram()
-
-mse = function(model, data, ytrue, predict_ppsqm){
- preds = predict(model, data)
- if (predict_ppsqm == TRUE){
-   preds = preds * data$square_meters
- }
- return(mean((preds - ytrue)^2))
-}
-
-exp_model0 = lm(ppsqm ~ object_type + private_offer + rooms + square_meters, data=dfrent)
-print(mse(exp_model0, dfrent, dfrent$ppsqm, predict_ppsqm=TRUE))
-
-exp_model1 = lm(price ~ object_type + private_offer + rooms + square_meters, data=dfrent)
-print(mse(exp_model1, dfrent, dfrent$price, predict_ppsqm=FALSE))
+# dfrent = dfrent %>% filter(ppsqm <= quantile(dfrent$ppsqm, 0.99))
+# ggplot(data=dfrent, aes(x=ppsqm)) + geom_histogram()
+# 
+# mse = function(model, data, ytrue, predict_ppsqm){
+#  preds = predict(model, data)
+#  if (predict_ppsqm == TRUE){
+#    preds = preds * data$square_meters
+#  }
+#  return(mean((preds - ytrue)^2))
+# }
+# 
+# exp_model0 = lm(ppsqm ~ object_type + private_offer + rooms + square_meters, data=dfrent)
+# print(mse(exp_model0, dfrent, dfrent$ppsqm, predict_ppsqm=TRUE))
+# 
+# exp_model1 = lm(price ~ object_type + private_offer + rooms + square_meters, data=dfrent)
+# print(mse(exp_model1, dfrent, dfrent$price, predict_ppsqm=FALSE))
 ############## END OF EXPERIMENT ################

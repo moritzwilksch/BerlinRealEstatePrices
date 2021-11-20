@@ -5,31 +5,22 @@ import pandas as pd
 import numpy as np
 import matplotlib_inline
 
-matplotlib_inline.backend_inline.set_matplotlib_formats("svg")
+matplotlib_inline.backend_inline.set_matplotlib_formats("png")
 plt.rcParams["font.family"] = "Arial"
 plt.rcParams["font.size"] = 14
 
 ROOT_DIR = "../"
 DUKEBLUE = "#00339B"
 
+dfrent = pd.read_parquet(ROOT_DIR + "data/dfrent.parquet")
+dfbuy = pd.read_parquet(ROOT_DIR + "data/dfbuy.parquet")
 #%%
-df = pd.read_parquet(ROOT_DIR + "data/berlin_clean.parquet")
-# df['to_rent'] = df['to_rent'].astype('category')
 
-#%%
-RENT_QUANTILE = 0.98
-BUY_QUANTILE = 0.99
+dfrent_cutoff = np.quantile(dfrent.square_meters.fillna(0), 0.999)
+dfbuy_cutoff = np.quantile(dfbuy.square_meters.fillna(0), 0.999)
 
-rent_cutoff = df.query("to_rent")["price"].quantile(RENT_QUANTILE)
-buy_cutoff = df.query("not to_rent")["price"].quantile(BUY_QUANTILE)
-print(f"{' Quantile Cutoffs ':-^40}")
-print(f"{'RENT cutoff':<15} = €{rent_cutoff:,.2f}")
-print(f"{'BUY cutoff':<15} = €{buy_cutoff:,.2f}")
-print("-" * 40)
-
-dfrent = df.query("price <= @rent_cutoff and to_rent == True")
-dfbuy = df.query("price <= @buy_cutoff and to_rent == False")
-dfall = pd.concat([dfrent, dfbuy])
+dfrent = dfrent.query("square_meters <= @dfrent_cutoff")
+dfbuy = dfbuy.query("square_meters <= @dfbuy_cutoff")
 
 #%%
 ################## Price Distribution ##################
@@ -48,7 +39,7 @@ plt.savefig(ROOT_DIR + "documents/plots/price_distribution_rentbuy.png", dpi=300
 #%%
 ################## Rent Price vs. SQM by private offer ##################
 
-fig, ax = plt.subplots(figsize=(12, 6))
+fig, ax = plt.subplots(figsize=(8, 6))
 
 sns.scatterplot(
     data=dfrent,
@@ -64,6 +55,12 @@ ax.set_xlabel("Size ($m^2$)")
 ax.set_ylabel("Price")
 sns.despine()
 
+plt.savefig(ROOT_DIR + "documents/plots/price_sqm_scatter.png", dpi=300, facecolor="w")
+
+
 #%%
+
+
+
 
 
