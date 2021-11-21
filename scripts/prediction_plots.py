@@ -169,7 +169,7 @@ ax.set_xticklabels(())
 ax.set_yticklabels(())
 ax.set_xticks(())
 ax.set_yticks(())
-ax.set_title("Random Slope by Zip Code", weight="bold", size=20, family="Arial")
+ax.set_title("Random Intercept by Zip Code", weight="bold", size=20, family="Arial")
 sns.despine(left=True, bottom=True)
 
 # Scalebar - Need to calculate ratio from pixels to real world
@@ -179,13 +179,13 @@ distance_meters = points[0].distance(points[1])
 ax.add_artist(ScaleBar(distance_meters, location="lower left"))
 
 plt.tight_layout()
-fig.colorbar(ax.collections[0], ax=ax, label="Random Slope", shrink=0.5)
+fig.colorbar(ax.collections[0], ax=ax, label="Random Intercept", shrink=0.5)
 
 streets.plot(color="0.8", ax=ax, zorder=-1)
 ax.set_xlim(13, 13.8)
 ax.set_ylim(52.3, 52.7)
 
-# plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
+plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
 
 #%%
 mitte = geodf.query("plz == '10117'").to_crs(epsg=32642).centroid.to_frame().set_geometry(0)
