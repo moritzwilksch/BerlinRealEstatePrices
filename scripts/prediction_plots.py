@@ -15,6 +15,8 @@ DUKEBLUE = "#00339B"
 
 #%%
 leverage_removed = pd.read_parquet(ROOT_DIR + "data/intermediaries/leverage_removed.parquet")
+catcols = ["object_type", "rooms", "zip_code"]
+leverage_removed[catcols] = leverage_removed[catcols].astype("category")
 
 #%%
 model = smf.ols(
@@ -23,9 +25,21 @@ model = smf.ols(
 result = model.fit()
 print(result.summary())
 
+#%%
+hierarchical_model = smf.mixedlm(
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters",
+    data=leverage_removed,
+    groups=leverage_removed["zip_code"],
+)
+hierarchical_result = hierarchical_model.fit()
+hierarchical_result.summary()
+
 
 #%%
-preds = np.exp(result.predict(leverage_removed))
+
+USE_MODEL = result
+
+preds = np.exp(USE_MODEL.predict(leverage_removed))
 _df = pd.concat([leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1)
 
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -55,6 +69,24 @@ plt.tight_layout()
 sns.despine()
 plt.savefig(ROOT_DIR + "documents/plots/predplot_rooms_objtype.png", dpi=300, facecolor="w")
 
+
+#%%
+##################### EXAMPLE PROPERTY #####################
+example_prop = pd.DataFrame(
+    {
+        "object_type": ["APARTMENT"],
+        "private_offer": [False],
+        "rooms": ["3"],
+        "square_meters": [65],
+    }
+)
+
+cheap = np.exp(hierarchical_result.predict(example_prop) + hierarchical_result.random_effects["13059"]["Group"]).iloc[0]
+expensive = np.exp(hierarchical_result.predict(example_prop) + hierarchical_result.random_effects["10117"]["Group"]).iloc[0]
+
+print(f"{cheap = :.2f}€")
+print(f"{expensive = :.2f}€")
+
 #%%
 #################### Random Effects by ZIP ####################
 df_dotplot = pd.read_parquet("../data/intermediaries/ranef_by_zipcode.parquet").sort_values(
@@ -64,6 +96,23 @@ df_dotplot["zip"] = df_dotplot["zip"].astype("category")
 
 df_dotplot
 
+
+def is_sig(pointestimate, err):
+    if pointestimate < 0 and pointestimate + err >= 0:
+        return np.nan
+    elif pointestimate > 0 and pointestimate - err <= 0:
+        return np.nan
+    else:
+        return pointestimate
+
+
+df_dotplot = df_dotplot.assign(
+    sig=df_dotplot.apply(lambda row: is_sig(row["pointestimate"], row["err"]), axis=1)
+)
+
+_sorted = df_dotplot.dropna().sort_values(by="sig", ascending=False)
+print(_sorted.head(5))
+print(_sorted.tail(5))
 
 #%%
 ################# Geo Plot #####################
@@ -75,15 +124,6 @@ home = gpd.read_file(ROOT_DIR + "data/home.geojson")
 #%%
 
 merged = pd.merge(geodf.rename({"plz": "zip"}, axis=1), df_dotplot, on="zip", how="left")
-
-
-def is_sig(pointestimate, err):
-    if pointestimate < 0 and pointestimate + err >= 0:
-        return np.nan
-    elif pointestimate > 0 and pointestimate - err <= 0:
-        return np.nan
-    else:
-        return pointestimate
 
 
 merged = merged.assign(
@@ -145,4 +185,26 @@ streets.plot(color="0.8", ax=ax, zorder=-1)
 ax.set_xlim(13, 13.8)
 ax.set_ylim(52.3, 52.7)
 
-plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
+# plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
+
+#%%
+mitte = geodf.query("plz == '10117'").to_crs(epsg=32642).centroid.to_frame().set_geometry(0)
+mitte_df = mitte.sjoin_nearest(merged.to_crs(epsg=32642), how="right", distance_col="dist_to_mitte").assign(dist_to_mitte=lambda x: x["dist_to_mitte"]/1000)
+
+#%%
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.scatterplot(data=mitte_df, x="dist_to_mitte", y=np.exp(mitte_df['pointestimate_sig']), ax=ax, color=DUKEBLUE)
+ax.axhline(1, color="0.7", linestyle="--")
+
+good_deal = ["13627", "12057", "10969"]
+_annot_df = mitte_df.query("zip.isin(@good_deal)")
+for x, y, zipcode in zip(_annot_df['dist_to_mitte'], np.exp(_annot_df['pointestimate_sig']), _annot_df['zip']):
+    ax.text(x, y-0.05, str(zipcode), ha="right")
+
+ax.set_title("Distance to Mitte (km) vs. Multiplicative Price Effect", weight="bold")
+ax.set_xlabel("Distance to Mitte (km)")
+ax.set_ylabel("Multiplicative Price Effect")
+sns.despine()
+plt.tight_layout()
+plt.savefig(ROOT_DIR + "documents/plots/dist_to_mitte.png", dpi=300, facecolor="w")
+
