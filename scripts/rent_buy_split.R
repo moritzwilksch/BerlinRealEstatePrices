@@ -4,7 +4,7 @@ library(ggplot2)
 library(lme4)
 library(lattice)
 
-dfall = read_parquet("data/berlin_clean.parquet")
+dfall = read_parquet("data/berlin_clean.parquet") # NAs???????????????
 
 dfrent = dfall %>% filter(to_rent == TRUE & ! object_type %in% c("HOLIDAY_HOUSE_APARTMENT", "HOUSE"))
 dfrent$object_type = droplevel(dfrent$object_type)
