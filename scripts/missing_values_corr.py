@@ -15,9 +15,9 @@ import polars as pl
 pdf = pl.read_parquet("../data/berlin_clean.parquet")
 
 #%%
-pdf.with_columns(pl.col("*").is_null()).melt(
-    id_vars=pdf.columns, value_vars="rooms"
-).with_column(pl.col("value").cast(pl.UInt8)).groupby("variable").pivot("variable", "value")
+pdf.with_columns(pl.col("*").is_null())#.melt(id_vars=pdf.columns, value_vars=pdf.columns)
+
+# .with_column(pl.col("value").cast(pl.UInt8)).groupby("variable").pivot("variable", "value")
 
 #%%
 
