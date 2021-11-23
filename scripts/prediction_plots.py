@@ -98,9 +98,9 @@ df_dotplot
 
 
 def is_sig(pointestimate, err):
-    if pointestimate < 0 and pointestimate + err >= 0:
+    if pointestimate < 0 and pointestimate + err * 1.96 >= 0:
         return np.nan
-    elif pointestimate > 0 and pointestimate - err <= 0:
+    elif pointestimate > 0 and pointestimate - err * 1.96 <= 0:
         return np.nan
     else:
         return pointestimate
@@ -185,7 +185,7 @@ streets.plot(color="0.8", ax=ax, zorder=-1)
 ax.set_xlim(13, 13.8)
 ax.set_ylim(52.3, 52.7)
 
-plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
+# plt.savefig(ROOT_DIR + "documents/plots/geoplot.png", dpi=300, facecolor="w")
 
 #%%
 mitte = geodf.query("plz == '10117'").to_crs(epsg=32642).centroid.to_frame().set_geometry(0)
