@@ -48,7 +48,7 @@ ggplot(data=dfrent, aes(x=square_meters, y=price)) + geom_point(alpha=0.5) + geo
 # all mean effects
 model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=dfrent)
 summary(model0)
-plot(model0)
+# plot(model0)
 
 
 plot(model0, which=4) # high cooks dist for 21527, 19074, 19565
@@ -63,7 +63,7 @@ leverage_removed = leverage_removed[-problematic, ]
 write_parquet(leverage_removed, "data/intermediaries/leverage_removed.parquet")
 model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=leverage_removed)
 summary(model0)
-plot(model0)
+# plot(model0)
 
 # compdf = data.frame(ytrue=dfrent$price, yhat=exp(predict(model0, dfrent)))
 # ggplot(data=compdf, aes(x=ytrue, y=yhat)) + geom_point(alpha=0.1)
@@ -71,7 +71,7 @@ plot(model0)
 # room x sqm interaction
 model1 = lm(log(price) ~ object_type + private_offer + rooms * square_meters, data=leverage_removed)
 summary(model1)
-plot(model1)
+# plot(model1)
 
 
 anova(model1, model0)

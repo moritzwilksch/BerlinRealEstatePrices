@@ -22,7 +22,7 @@ table(df$private_offer) # No NAs
 
 # Square Meters
 sum(df$square_meters == 0)  # ~5k with 0 sqm size
-df$square_meters[df$square_meters == 0] = NA  # make explicit
+df$square_meters[df$square_meters == 0, "square_meters"] = NA  # make explicit
 
 ###### General EDA ######
 ### Created at (time of scrape)
@@ -76,13 +76,18 @@ ggplot(data=df, aes(x=price)) + geom_histogram(bins=60) + theme_bw()+ facet_wrap
 table(df$private_offer, df$to_rent)  # fewer private offers than non-private
 
 ### Rooms
-tab = table(df$rooms)  # numerics (whole and decimal numbers) and text ("single room" [Einzelzimmer], "NA" [k.A.])
-tab[tab > 1]  # only regard categories that occur multiple times
-df[df$rooms %in% c("Zimmer k.A.", "k.A. Zimmer", "0"), "rooms"] = NA  # k.A. = keine Angabe = not given
+df[which(df$rooms %in% c("Zimmer k.A.", "k.A. Zimmer", "0")), "rooms"] = NA  # k.A. = keine Angabe = not given
+
+df[which(df$rooms %in% c("Privatzimmer", "Einzelzimmer")), "rooms"] = "1"  # Privatzimmer <=> Private room, Einzelzimmer <=> Sinlge room
+levels(df$rooms) = c(levels(df$rooms), "Shared", "Missing")
+df[which(df$rooms == "Gemeinsames Zimmer"), "rooms"] = "Shared"  # Geimeinsames Zimmer <=> Shared room
+df[which(is.na(df$rooms)), "rooms"] = "Missing"
 
 # Exclude anything with more than 5 rooms or anything that only occurs once
-df = df %>% filter(rooms %in% names(tab[tab > 1]))
-df = df[as.numeric(as.character(df$rooms)) <= 5, ]
+tab = table(df$rooms)  # numerics (whole and decimal numbers) and text ("single room" [Einzelzimmer], "NA" [k.A.])
+tab[tab > 1]  # only regard categories that occur multiple times
+df = df %>% filter(rooms %in% names(tab[tab > 1] | is.na(df$rooms) | df$rooms == "Missing"))
+df = df[as.numeric(as.character(df$rooms)) <= 5 | df$rooms %in% c("Shared", "Missing") | is.na(df$rooms), ]
 
 
 # merge half-rooms into lower full rooms
