@@ -88,8 +88,9 @@ print(f"{cheap = :.2f}€")
 print(f"{expensive = :.2f}€")
 
 #%%
+USE_RENTALS = True
 #################### Random Effects by ZIP ####################
-df_dotplot = pd.read_parquet("../data/intermediaries/ranef_by_zipcode.parquet").sort_values(
+df_dotplot = pd.read_parquet(f"../data/intermediaries/ranef_by_zipcode_{'rentals' if USE_RENTALS else 'sales'}.parquet").sort_values(
     by="pointestimate"
 )
 df_dotplot["zip"] = df_dotplot["zip"].astype("category")
