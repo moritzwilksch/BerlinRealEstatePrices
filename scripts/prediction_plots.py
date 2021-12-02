@@ -47,6 +47,16 @@ USE_MODEL = result
 preds = np.exp(USE_MODEL.predict(leverage_removed))
 _df = pd.concat([leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1)
 
+room_order = [
+    "Missing",
+    "Shared",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+]
+
 fig, ax = plt.subplots(figsize=(10, 5))
 palette = {
     "APARTMENT": DUKEBLUE,
@@ -55,20 +65,25 @@ palette = {
     "TEMPORARY_LIVING": "#659B5E",
     "HOLIDAY_HOUSE_APARTMENT": "white",
 }
-sns.pointplot(data=_df, x="rooms", y="preds", hue="object_type", palette=palette, ax=ax)
+sns.pointplot(
+    data=_df, x="rooms", y="preds", hue="object_type", palette=palette, ax=ax, order=room_order
+)
 
 label_yvals = _df.query("rooms == '5'").groupby("object_type")["preds"].mean().dropna().to_dict()
 label_yvals["APARTMENT"] = label_yvals["APARTMENT"] * 0.9
+label_yvals["HOUSE"] = label_yvals["HOUSE"] * 1.025
+label_yvals["TEMPORARY_LIVING"] = label_yvals["TEMPORARY_LIVING"] * 0.9
+label_yvals["SHARED_APARTMENT"] = label_yvals["SHARED_APARTMENT"] * 1.1
 
 for label, yval in label_yvals.items():
-    ax.text(4.2, yval, label, verticalalignment="center", weight="bold", color=palette[label])
+    ax.text(6.2, yval, label, verticalalignment="center", weight="bold", color=palette[label])
 
 ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: "€{:,.0f}".format(y)))
 ax.set_xlabel("Number of Rooms")
 ax.set_ylabel("Rent Price")
 ax.set_title("Predicted Rent Price by Number of Rooms", weight="bold")
 ax.grid(axis="y", ls="--")
-ax.set_xlim(0, 4.1)
+ax.set_xlim(0, 6.1)
 ax.legend([], frameon=False)
 plt.tight_layout()
 sns.despine()
