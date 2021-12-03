@@ -211,25 +211,54 @@ plt.savefig(ROOT_DIR + "documents/plots/geoplot_rentals_and_sales.png", dpi=300,
 #%%
 merged = merged_rentals  # CAUTION
 
+fig, ax = plt.subplots(figsize=(10, 6))
 
 mitte = geodf.query("plz == '10117'").to_crs(epsg=32642).centroid.to_frame().set_geometry(0)
 mitte_df = mitte.sjoin_nearest(
     merged.to_crs(epsg=32642), how="right", distance_col="dist_to_mitte"
 ).assign(dist_to_mitte=lambda x: x["dist_to_mitte"] / 1000)
 
-#%%
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.scatterplot(
-    data=mitte_df, x="dist_to_mitte", y=np.exp(mitte_df["pointestimate_sig"]), ax=ax, color=DUKEBLUE
-)
-ax.axhline(1, color="0.7", linestyle="--")
 
-good_deal = ["13627", "12057", "10969"]
+# calculate cheap & expensive points
+regline = smf.ols("np.exp(pointestimate_sig) ~ dist_to_mitte", data=mitte_df).fit()
+preds = regline.predict(mitte_df)
+deltas = np.exp(mitte_df["pointestimate_sig"]) - preds
+expensive_cutoff = np.nanquantile(deltas, 0.975)
+cheap_cutoff = np.nanquantile(deltas, 0.025)
+
+# plot
+sns.scatterplot(
+    data=mitte_df.loc[deltas > expensive_cutoff, :],
+    color="red",
+    x="dist_to_mitte",
+    y=np.exp(mitte_df["pointestimate_sig"]),
+    ax=ax,
+)
+sns.scatterplot(
+    data=mitte_df.loc[deltas < cheap_cutoff, :],
+    color="green",
+    x="dist_to_mitte",
+    y=np.exp(mitte_df["pointestimate_sig"]),
+    ax=ax,
+)
+sns.scatterplot(
+    data=mitte_df.loc[(deltas < expensive_cutoff) & (deltas > cheap_cutoff), :],
+    color=DUKEBLUE,
+    x="dist_to_mitte",
+    y=np.exp(mitte_df["pointestimate_sig"]),
+    ax=ax,
+)
+
+# details
+ax.axhline(1, color="0.7", linestyle="--")
+# good_deal = ["13627", "12057", "10969"]
+good_deal = mitte_df.loc[deltas < cheap_cutoff, "zip"].values
+
 _annot_df = mitte_df.query("zip.isin(@good_deal)")
 for x, y, zipcode in zip(
     _annot_df["dist_to_mitte"], np.exp(_annot_df["pointestimate_sig"]), _annot_df["zip"]
 ):
-    ax.text(x, y - 0.05, str(zipcode), ha="right")
+    ax.text(x, y - 0.05, str(zipcode), ha="right", size=8)
 
 ax.set_title("Distance to Mitte (km) vs. Multiplicative Price Effect", weight="bold")
 ax.set_xlabel("Distance to Mitte (km)")
