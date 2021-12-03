@@ -5,7 +5,7 @@ library(ggplot2)
 
 df = read_parquet("data/berlin.parquet")
 
-df = df %>% filter(!object_type %in% c("NURSING_HOME", "RETIREMENT_HOME"))
+df = df %>% filter(!object_type %in% c("NURSING_HOME", "RETIREMENT_HOME", "HOLIDAY_HOUSE_APARTMENT"))
 
 ################### EDA & Stats ###################
 

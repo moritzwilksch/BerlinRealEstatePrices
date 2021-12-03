@@ -21,13 +21,13 @@ Findings suggest that TBD!!!!!
 This report aims to identify the characteristics of an apartment or house that are associated with higher and lower prices to shed light on which attributes buyers and renters might look for when searching affordable housing in Berlin. The data used in this study has been collected through web scraping the three most popular online market places for real estate in Germany, `www.immobilienscout24.de`, `www.immowelt.de`, and `ebay-kleinanzeigen.de`. Every listing is characterized using the following attributes: `object_type` (apartment, shared apartment, temporary living or house), `private_offer` (whether the seller is a private or commercial entity),  `rooms` (the number of rooms), `square_meters` (the size in square meters), and the `zip_code`. Based on these attributes, I will use hierarchical linear models to model the `price` (separately for properties for rent and sale).
 
 # Data and Methodology
-The web scraping of the real estate listings was conducted over a period of five moths, from late April 2021 through late October 2021. 
+The web scraping of the real estate listings was conducted over a period of five moths, from late April 2021 through late October 2021. The raw data for Berlin contains around 72,000 data points. 
 
 - collection + # data
 - unused vars
 - cleaning
 
-![Flowchart](plots/n_flowchart.pdf)
+![Flowchart of data preprocessing](plots/n_flowchart.pdf)
 
 
 
