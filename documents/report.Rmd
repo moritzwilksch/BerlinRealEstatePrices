@@ -27,6 +27,9 @@ The web scraping of the real estate listings was conducted over a period of five
 - unused vars
 - cleaning
 
+![Flowchart](plots/n_flowchart.pdf)
+
+
 
 
 # Model
