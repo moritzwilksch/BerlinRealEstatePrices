@@ -100,8 +100,8 @@ df$rooms = droplevels(df$rooms)
 ggplot(df, aes(x=rooms)) + geom_bar() + theme_bw()
 
 ### Square Meters
-#sqm_cutoff = quantile(df$square_meters, 0.99, na.rm=T)
-# df = df %>% filter(square_meters <= sqm_cutoff)
+#sqm_cutoff = quantile(df$square_meters, 0.995, na.rm=T)
+#df = df %>% filter(square_meters <= sqm_cutoff)
 ggplot(df, aes(x=square_meters)) + geom_histogram() + theme_bw()
 
 
