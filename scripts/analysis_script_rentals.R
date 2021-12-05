@@ -3,6 +3,10 @@ library(dplyr)
 library(ggplot2)
 library(lme4)
 library(lattice)
+library(xtable)
+options(xtable.comment = FALSE)
+
+OUTPUT_TABLES = TRUE
 
 dfrent = read_parquet("data/dfrent.parquet")
 dfbuy = read_parquet("data/dfbuy.parquet")
@@ -32,6 +36,8 @@ ggplot(data=dfbuy, aes(x=price)) + geom_histogram(bins=60) + theme_bw() # many z
 ################### RENTAL UNITS ###################
 ####################################################
 
+x = dfbuy %>% filter(price > quantile(dfbuy$price, 0.999))
+
 ################### EDA ###################
 
 # price by sqm
@@ -51,19 +57,22 @@ summary(model0)
 # plot(model0)
 
 
-plot(model0, which=4) # high cooks dist for 21527, 19074, 19565
+plot(model0, which=4) # high cooks dist
 
-high_dist = c(21527, 19074, 19565)
-problematic = c(9841, 13702, 16558)
+
+problematic = c(23065, 14691, 30143)
 
 # refit
-leverage_removed = dfrent[-high_dist, ]
-leverage_removed = leverage_removed[-problematic, ]
+leverage_removed = dfrent[-problematic, ]
 
 write_parquet(leverage_removed, "data/intermediaries/leverage_removed.parquet")
 model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=leverage_removed)
 summary(model0)
 # plot(model0)
+
+if(OUTPUT_TABLES){
+  print(xtable(summary(model0)), file="documents/scripts_output/rentals_model0_summary.tex")
+}
 
 # compdf = data.frame(ytrue=dfrent$price, yhat=exp(predict(model0, dfrent)))
 # ggplot(data=compdf, aes(x=ytrue, y=yhat)) + geom_point(alpha=0.1)
@@ -73,6 +82,9 @@ model1 = lm(log(price) ~ object_type + private_offer + rooms * square_meters, da
 summary(model1)
 # plot(model1)
 
+if(OUTPUT_TABLES){
+  print(xtable(summary(model1)), file="documents/scripts_output/rentals_model1_summary.tex")
+}
 
 anova(model1, model0)
 
@@ -85,6 +97,9 @@ summary(model2)
 anova(model2, model1)
 dotplot(ranef(model2))
 
+if(OUTPUT_TABLES){
+  print(xtable(summary(model2)$coefficients), file="documents/scripts_output/rentals_model2_summary.tex")
+}
 
 ## Export Section
 ranef(model2)$zip_code

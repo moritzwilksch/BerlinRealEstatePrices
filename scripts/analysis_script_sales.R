@@ -44,12 +44,15 @@ model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, da
 summary(model0)
 # plot(model0)
 
-high_dist = c(90, 12546)
-problematic = c(12453, 2475, 9284, 30622, 18394, 22205, 17716, 5827, 30619)
+#high_dist = c(90, 12546)
+#problematic = c(12453, 2475, 9284, 30622, 18394, 22205, 17716, 5827, 30619)
+problematic = c(26107, 5855, 22 ,19794, 91)
 
 # refit
-leverage_removed = dfbuy[-high_dist, ]
-leverage_removed = leverage_removed[-problematic, ]
+#leverage_removed = dfbuy[-high_dist, ]
+#leverage_removed = leverage_removed[-problematic, ]
+
+leverage_removed = dfbuy[-problematic, ]
 
 model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=leverage_removed)
 summary(model0)

@@ -24,14 +24,20 @@ dfbuy = dfbuy.query("square_meters <= @dfbuy_cutoff")
 
 #%%
 ################## Price Distribution ##################
-fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 sns.histplot(dfrent["price"], bins=50, color=DUKEBLUE, ax=axes[0])
 sns.histplot(dfbuy["price"], bins=50, color=DUKEBLUE, ax=axes[1])
 
 axes[0].xaxis.set_major_formatter(lambda x, _: f"{x:,.0f}")
+axes[0].set_title("Rentals", weight="bold")
 axes[1].xaxis.set_major_formatter(lambda x, _: f"{x/1000:,.0f}k" if x < 1e6 else f"{x/1e6:,.1f}m")
-_ = [ax.set_xlabel("Price") for ax in axes]
-fig.suptitle("Price Distribution of Listings for Rent and for Sale", weight="bold")
+axes[1].set_title("Sales", weight="bold")
+
+# set labels and margins
+_ = [ax.set_xlabel("Price (EUR)") for ax in axes]
+_ = [ax.margins(x=0) for ax in axes]
+
+fig.suptitle("Price Distribution of Listings", weight="bold")
 sns.despine()
 plt.tight_layout()
 plt.savefig(ROOT_DIR + "documents/plots/price_distribution_rentbuy.png", dpi=300, facecolor="w")
@@ -39,7 +45,7 @@ plt.savefig(ROOT_DIR + "documents/plots/price_distribution_rentbuy.png", dpi=300
 #%%
 ################## Rent Price vs. SQM by private offer ##################
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, axes = plt.subplots(1, 2, figsize=(8, 4))
 
 sns.scatterplot(
     data=dfrent,
@@ -48,11 +54,21 @@ sns.scatterplot(
     hue="private_offer",
     palette=[DUKEBLUE, "red"],
     alpha=0.075,
-    ax=ax
+    ax=axes[0]
 )
 
-ax.set_xlabel("Size ($m^2$)")
-ax.set_ylabel("Price")
+sns.scatterplot(
+    data=dfbuy,
+    x="square_meters",
+    y="price",
+    hue="private_offer",
+    palette=[DUKEBLUE, "red"],
+    alpha=0.075,
+    ax=axes[1]
+)
+
+axes[0].set_xlabel("Size ($m^2$)")
+axes[0].set_ylabel("Price")
 sns.despine()
 
 plt.savefig(ROOT_DIR + "documents/plots/price_sqm_scatter.png", dpi=300, facecolor="w")

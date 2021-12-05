@@ -41,7 +41,7 @@ df$object_type = droplevels(df$object_type)
 # Very few, extreme outliers! (10,000,000 m^2)
 ggplot(data=df %>% filter(square_meters < 1000), aes(x=square_meters)) + geom_histogram(bins=60)
 
-quantile_cutoff = quantile(df$square_meters, 0.99, na.rm=T) # remove top 1% of outliers
+quantile_cutoff = quantile(df$square_meters, 0.99, na.rm=T) # remove top 1% of outliers ONLY FOR PLOTTING 
 ggplot(data=df %>% filter(square_meters < quantile_cutoff), aes(x=square_meters)) + geom_histogram(bins=60) + theme_bw()
 
 # Also excludes some of the price outliers

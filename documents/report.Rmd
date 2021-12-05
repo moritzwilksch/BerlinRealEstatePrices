@@ -1,5 +1,5 @@
 ---
-title: "The Berlin Real Estate Market"
+title: "**The Berlin Real Estate Market**"
 author: "Moritz Wilksch"
 output: pdf_document
 ---
@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
 	warning = FALSE
 )
 
+# knitr::opts_chunk$set(fig.pos = "!h", out.extra = "")
 ```
 
 # Summary
@@ -23,8 +24,19 @@ This report aims to identify the characteristics of an apartment or house that a
 # Data and Methodology
 The web scraping of the real estate listings was conducted over a period of five moths, from late April 2021 through late October 2021. The raw data for Berlin contains around 72,000 data points. Besides the attributes that are used for this analysis, each listing also has a title and detailed description (both free text). Due to their fromat, they will not be used in this project. As web scraping is a brittle and error-prone process, multiple data cleaning steps are necessary.
 
+## EDA
+
+Even after data cleaning the distributions of rental and sales prices are still skewed. This might lead to problems when fitting linear models, but log transforming could be a potential remedy to this issue in the modeling phase.
+
+![Distribution of `price`](plots/price_distribution_rentbuy.png)
+
+```{r, out.width="400px"}
+# knitr::include_graphics("plots/price_distribution_rentbuy.png")
+```
+
+
 ## Data Cleaning
-After scraping the data, I first focus the analysis on apartments, shared apartments, temporary living and houses. This excludes commercial and retail properties as well as nursing homes and retirement homes, as this analysis is primarily motivated by the scarce market for individual's homes. After conducting some exploratory data analysis, it is evident that some values in the predictor `rooms`, are erroneous. It contains more than 80 levels most of which are wrong, e.g. 990 or other large numbers. This ist most likely the result of the web scraper picking up a different number as the number of rooms. Based on a frequency table, I keep properties with 5 or less rooms and merge the text-based entries into the correct categories (e.g. "single room" => 1, "shared room" => shared, "not given" => missing).
+After scraping the data, I first focus the analysis on apartments, shared apartments, temporary living and houses. This excludes commercial and retail properties as well as nursing homes and retirement homes, as this analysis is primarily motivated by the scarce market for individual's homes. After conducting some exploratory data analysis, it is evident that some values in the predictor `rooms`, are erroneous. It contains more than 80 levels most of which are wrong, e.g. 990 or other large numbers. This ist most likely the result of the web scraper picking up a different number as the number of rooms. Based on a frequency table of the `rooms` levels, I keep properties with 5 or less rooms and merge the text-based entries into the correct categories (e.g. "single room" $\rightarrow$ 1, "shared room" $\rightarrow$ shared, "not given" $\rightarrow$ missing).
 Next, I clean the `square_meters` variable. The EDA has shown significant skew with properties listed as having up to 10,000,000 $m^2$ which once again is the web scraper picking up wrong numbers (maybe the purchase price?). After manual inspection, the problem with skew in `square_meters` originates from an incorrect classification of a properties `to_rent` attribute: Some listings have "rental" prices of up to 1,000,000 EUR and others have "sales" prices of a few hundred EUR. I employ the following heuristic to re-classify these listings based on their price per square meter (`ppsqm`):
 
 |Current `to_rent`| `ppsqm` | Current `price` | Reclassify as... |
@@ -32,14 +44,31 @@ Next, I clean the `square_meters` variable. The EDA has shown significant skew w
 |`TRUE` | $> 100$ | $> 10,000$ | For sale |
 |`FALSE` | $< 250$ | $< 10,000$ | For rent |
 
-This heuristic assumes that a) "rentals" that cost more than 10,000 EUR/month and 100 EUR/sqm are actually properties for sale (because no rental property is this expensive) and b) properties that are "for sale" with a listing price of below 10,000 EUR and a `ppsqm` < 250 EUR are actually rental properties. Finally, to remove data entry errors like unreasonably large apartments, I remove outliers in the `square_meters` variable at the 99.9th percentile for rental properties and properties for sale separately. This only removes a hand full of data points which severely skew the distribution due to erroneous data.
+This heuristic assumes that a) "rentals" that cost more than 10,000 EUR/month and 100 EUR/sqm are actually properties for sale (because no rental property is this expensive) and b) properties that are "for sale" with a listing price of below 10,000 EUR and a `ppsqm` < 250 EUR are actually rental properties. Finally, to remove data entry errors like unreasonably large apartments, I remove outliers in the `square_meters` variable at the 99.9th percentile for rental properties and properties for sale separately. This only removes a hand full of data points which severely skew the distribution due to erroneous data. 
+Some properties for sale listings have an unrealistic price of exactly 21,474,836 EUR. Since this is the exact upper boundary of the `ìnt32` data type used to save prices in the database, I will have to assume the price caused an integer overflow and remove these listings from the analysis. This affects 14 listings in total.
 The entire data cleaning process and its effect on the sample size $n$ is displayed in the flowchart below.
 
-![Flowchart of data preprocessing](plots/n_flowchart.pdf)
+### ![Flowchart of data preprocessing](plots/n_flowchart.pdf)
+
+After this data cleaning process, the only variable that contains missing values is `rooms`. Most other missing values were removed with the removal of the erroneous room data, i.e., most rows that had missing values in other variable before the data cleaning were removed anyways as part of the data cleaning process displayed in the figure above. A potential reason for this correlation in missingness is a malfunction in the web scraper, where a faulty page load or incorrectly defined HTML tags messed up the collection of an entire listing. However, as we can see from the change in sample size throughout data cleaning, this only affected a minority of the data. To cope with the missing data in rooms, I encode "missing" as a separate category to potentially identify characteristics of listings with no given number of rooms later in the modeling phase.
+
+## Methodology
+To model the relationship between prices and object attributes, I will use linear models in order to gain interpretable insights. I start by fitting a linear regression model regressing price on all mean effects. I will subsequently explore interactions and assess the validity of the model's main assumptions. In the next step, I will introduce the hierarchical level location (here: `zip_code`). The prices of real estate are expected to vary significantly by area, so this multi-level model should deliver insights into how prices vary by neighborhood. TBD?????
+
+
+# Results
+## Non-hierarchical Linear Model
+The initial model is regressing the `log(price)` on the predictors `object_type`, `private_offer`, `rooms`, and `square_meters`. The log transformation of the dependent variable is necessary, as the price is log-normally distributed, so not transforming it leads to severe assumption violations. This initial model achieves an $R^2 \approx 0.66$ after removing three high-leverage points. Thus, it already explains a significant portion of the variance in `log(price)`. All predictors turn out to be significant. As the EDA suggests a potential interaction between `rooms` and `square_meters`, I build a second version of the model using this interaction. Comparing the two versions of the model with an ANOVA test suggests that adding the interaction to the model is helpful in explaining more variance in the dependent variable. The coefficients for this model are shown in Appendix A.
+
+
+- ANOVA Table?
 
 
 
-
-# Model
 
 # Conclusion
+
+\newpage
+# Appendix
+## (A) Coefficients for non-hierarchical linear model
+\input{"scripts_output/rentals_model1_summary.tex"}

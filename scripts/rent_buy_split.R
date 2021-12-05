@@ -39,5 +39,7 @@ all_new = rbind(dfrent, dfbuy)
 dfrent = all_new %>% filter(to_rent == TRUE)
 dfbuy = all_new %>% filter(to_rent == FALSE)
 
+dfbuy = dfbuy %>% filter(price < 21474836)  # integer overflow in DB?
+
 write_parquet(dfrent, "data/dfrent.parquet")
 write_parquet(dfbuy, "data/dfbuy.parquet")
