@@ -70,7 +70,7 @@ The initial model is regressing the `log(price)` on the predictors `object_type`
 
 ## Hierarchical Linear Model
 Since the price is expected to vary heavily by geographical area, it makes sense to include the location of a listing in the model. The location for this data set can only be determined on a zip code level, however, this should suffice to tell apart cheap from expensive neighborhoods as zip code ares in Berlin are rather small. Thus, I construct a the same linear model as described above (including the significant interaction term), but this time add the zip code as a level of random intercept. This way, each zip code area is allowed to have a different "baseline price" from which apartment features determine the final price. The figure below visualizes the *fixed effects* of both models (large differences in **bold**). 
-**STANDARDIZATION NECESSARY**
+**STANDARDIZATION NECESSARY????**
 We can see that while the coefficients for the `square_meters`, `private_offer`, and the `square_meters` $\times$ `rooms` interaction are similar in sign and magnitude, the coefficients for `rooms` as well as `obj_tpyeHOUSE` are quite different between rental and sales units. This indicates that units with more rooms (4 or 5) warrant a large price increase for sales but not so much for rentals.
 
 ### ![Comparison of fixed effects for rentals and sales model](plots/compare_coefs.png)
