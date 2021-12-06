@@ -20,9 +20,9 @@ nrow(dfrent %>% filter(square_meters > dfrent_cutoff))  # removes 21 outliers
 nrow(dfbuy %>% filter(square_meters > dfbuy_cutoff))  # removes 32 outliers
 
 dfrent = dfrent %>% filter(square_meters <= dfrent_cutoff)
-dfbuy = dfbuy %>% filter(square_meters <= dfbuy_cutoff)
+dfbuy = dfbuy %>% filter(square_meters <= dfbuy_cutoff & rooms != "Shared")
 
-
+dfbuy$rooms = droplevels(dfbuy$rooms)
 
 ####################################################
 ################### SALES UNITS ####################
@@ -46,13 +46,13 @@ summary(model0)
 
 #high_dist = c(90, 12546)
 #problematic = c(12453, 2475, 9284, 30622, 18394, 22205, 17716, 5827, 30619)
-problematic = c(26107, 5855, 22 ,19794, 91)
-
-# refit
-#leverage_removed = dfbuy[-high_dist, ]
-#leverage_removed = leverage_removed[-problematic, ]
-
+problematic = c(747, 1048, 22411, 90, 12780)
 leverage_removed = dfbuy[-problematic, ]
+problematic = c(3397, 20318, 10983, 7696)
+leverage_removed = leverage_removed[-problematic, ]
+problematic = c(17272, 27480, 2240)
+leverage_removed = leverage_removed[-problematic, ]
+
 
 model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=leverage_removed)
 summary(model0)
