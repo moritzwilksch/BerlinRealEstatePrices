@@ -1,5 +1,5 @@
 ---
-title: "**The Berlin Real Estate Market**"
+title: "\\vspace{-2cm}**The Berlin Real Estate Market**"
 author: "Moritz Wilksch"
 output: pdf_document
 ---
@@ -63,14 +63,21 @@ To model the relationship between prices and object attributes, I will use separ
 
 # Results
 ## Non-hierarchical Linear Model
-The initial model is regressing the `log(price)` on the predictors `object_type`, `private_offer`, `rooms`, and `square_meters`. The log transformation of the dependent variable is necessary, as the price is log-normally distributed, so not transforming it leads to severe assumption violations. This initial model achieves an $R^2 \approx 0.66$ after removing three high-leverage points. Thus, it already explains a significant portion of the variance in `log(price)`. All predictors turn out to be significant. As the EDA suggests a potential interaction between `rooms` and `square_meters`, I build a second version of the model using this interaction. Comparing the two versions of the model with an ANOVA test suggests that adding the interaction to the model is helpful in explaining more variance in the dependent variable. The coefficients for this model are shown in *Appendix B*.
+The initial model is regressing the `log(price)` on the predictors `object_type`, `private_offer`, `rooms`, and `square_meters`. The log transformation of the dependent variable is necessary, as the price is log-normally distributed, so not transforming it leads to severe assumption violations. This initial model achieves an $R^2 \approx 0.65$ for rentals ($R^2 \approx 0.54$ for sales) after removing three (12 for sales) high-leverage points. Thus, it already explains a significant portion of the variance in `log(price)`. All predictors turn out to be significant for modeling both rental and sales prices. As the EDA suggests a potential interaction between `rooms` and `square_meters`, I build a second version of the model using this interaction. Comparing the two versions of the model with an ANOVA test (for both rentals and sales respectively) suggests that adding the interaction to the model is helpful in explaining more variance in the dependent variables as the models with interactions have an $R^2 \approx 0.68$ and $R^2 \approx 0.62$ respectively. We can see that the model is able to explain slightly more variance in rental prices compared to sales prices and that including the interaction - while valuable for both models - helps more for modeling sales prices than it does for rent. This might indicate that forecasting sales prices of properties is a harder task than forecasting rental prices.The coefficients for both model are shown in *Appendix B*.
+
 - ANOVA Table?
 - Model assessment
 
 ## Hierarchical Linear Model
-Since the price is expected to vary heavily by geographical area, it makes sense to include the location of a listing in the model. The location for this data set can only be determined on a zip code level, however, this should suffice to tell apart cheap from expensive neighborhoods as zip code ares in Berlin are rather small. Thus, I construct a the same linear model as described above (including the significant interaction term), but this time add the zip code as a level of random intercept. This way, each zip code area is allowed to have a different "baseline price" from which apartment features determine the final price.
+Since the price is expected to vary heavily by geographical area, it makes sense to include the location of a listing in the model. The location for this data set can only be determined on a zip code level, however, this should suffice to tell apart cheap from expensive neighborhoods as zip code ares in Berlin are rather small. Thus, I construct a the same linear model as described above (including the significant interaction term), but this time add the zip code as a level of random intercept. This way, each zip code area is allowed to have a different "baseline price" from which apartment features determine the final price. The figure below visualizes the *fixed effects* of both models (large differences in **bold**). 
+**STANDARDIZATION NECESSARY**
+We can see that while the coefficients for the `square_meters`, `private_offer`, and the `square_meters` $\times$ `rooms` interaction are similar in sign and magnitude, the coefficients for `rooms` as well as `obj_tpyeHOUSE` are quite different between rental and sales units. This indicates that units with more rooms (4 or 5) warrant a large price increase for sales but not so much for rentals.
 
+### ![Comparison of fixed effects for rentals and sales model](plots/compare_coefs.png)
 
+The random intercepts by zip code are can also be visualized on a geographic map. The model has clearly learned that ares close to the city center (Mitte) are more expensive than the outskirts of Berlin (with some exceptions).
+
+### ![Map of Random Intercepts by zip code](plots/geoplot_rentals_and_sales.png)
 
 
 # Conclusion
@@ -80,8 +87,12 @@ Since the price is expected to vary heavily by geographical area, it makes sense
 ## (A) EDA plots
 ### Distribution of `rooms`
 
-![Distribution of `rooms`](plots/rooms_distribution_rentbuy.png)
+### ![Distribution of `rooms`](plots/rooms_distribution_rentbuy.png)
 
 
 ## (B) Coefficients for non-hierarchical linear model
+### Rentals
 \input{"scripts_output/rentals_model1_summary.tex"}
+
+### Sales
+\input{"scripts_output/sales_model1_summary.tex"}

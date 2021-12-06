@@ -6,10 +6,13 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 import matplotlib_inline
-import geopandas as gpd
-from matplotlib_scalebar.scalebar import ScaleBar
-from shapely.geometry.point import Point
 
+try:
+    import geopandas as gpd
+    from matplotlib_scalebar.scalebar import ScaleBar
+    from shapely.geometry.point import Point
+except ModuleNotFoundError:
+    print("Geopandas not installed")
 
 matplotlib_inline.backend_inline.set_matplotlib_formats("png")
 plt.rcParams["font.family"] = "Arial"
@@ -18,34 +21,53 @@ plt.rcParams["font.size"] = 16
 ROOT_DIR = "../"
 DUKEBLUE = "#00339B"
 
-#%%
-leverage_removed = pd.read_parquet(ROOT_DIR + "data/intermediaries/leverage_removed.parquet")
 catcols = ["object_type", "rooms", "zip_code"]
-leverage_removed[catcols] = leverage_removed[catcols].astype("category")
+#%%
+#--------------------------- Rentals ---------------------------------
+rentals_leverage_removed = pd.read_parquet(ROOT_DIR + "data/intermediaries/rentals_leverage_removed.parquet")
+rentals_leverage_removed[catcols] = rentals_leverage_removed[catcols].astype("category")
 
 #%%
-model = smf.ols(
-    "np.log(price) ~ object_type + private_offer + rooms + square_meters", data=leverage_removed
+rentals_model1 = smf.ols(
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters", data=rentals_leverage_removed
 )
-result = model.fit()
-print(result.summary())
+rentals_model1_result = rentals_model1.fit()
+print(rentals_model1_result.summary())
 
-#%%
-hierarchical_model = smf.mixedlm(
+rentals_model2 = smf.mixedlm(
     "np.log(price) ~ object_type + private_offer + rooms * square_meters",
-    data=leverage_removed,
-    groups=leverage_removed["zip_code"],
+    data=rentals_leverage_removed,
+    groups=rentals_leverage_removed["zip_code"],
 )
-hierarchical_result = hierarchical_model.fit()
-hierarchical_result.summary()
+rentals_model2_results = rentals_model2.fit()
+print(rentals_model2_results.summary())
 
+#%%
+#--------------------------- Sales ---------------------------------
+sales_leverage_removed = pd.read_parquet(ROOT_DIR + "data/intermediaries/sales_leverage_removed.parquet")
+sales_leverage_removed[catcols] = sales_leverage_removed[catcols].astype("category")
+
+#%%
+sales_model1 = smf.ols(
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters", data=sales_leverage_removed
+)
+sales_model1_result = sales_model1.fit()
+print(sales_model1_result.summary())
+
+sales_model2 = smf.mixedlm(
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters",
+    data=sales_leverage_removed,
+    groups=sales_leverage_removed["zip_code"],
+)
+sales_model2_results = sales_model2.fit()
+print(sales_model2_results.summary())
 
 #%%
 
-USE_MODEL = result
+USE_MODEL = rentals_model2_results
 
-preds = np.exp(USE_MODEL.predict(leverage_removed))
-_df = pd.concat([leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1)
+preds = np.exp(USE_MODEL.predict(rentals_leverage_removed))
+_df = pd.concat([rentals_leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1)
 
 room_order = [
     "Missing",
@@ -102,10 +124,10 @@ example_prop = pd.DataFrame(
 )
 
 cheap = np.exp(
-    hierarchical_result.predict(example_prop) + hierarchical_result.random_effects["13059"]["Group"]
+    rentals_model2_results.predict(example_prop) + rentals_model2_results.random_effects["13059"]["Group"]
 ).iloc[0]
 expensive = np.exp(
-    hierarchical_result.predict(example_prop) + hierarchical_result.random_effects["10117"]["Group"]
+    rentals_model2_results.predict(example_prop) + rentals_model2_results.random_effects["10117"]["Group"]
 ).iloc[0]
 
 print(f"{cheap = :.2f}€")

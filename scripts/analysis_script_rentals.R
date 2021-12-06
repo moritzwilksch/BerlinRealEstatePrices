@@ -65,7 +65,7 @@ problematic = c(23065, 14691, 30143)
 # refit
 leverage_removed = dfrent[-problematic, ]
 
-write_parquet(leverage_removed, "data/intermediaries/leverage_removed.parquet")
+write_parquet(leverage_removed, "data/intermediaries/rentals_leverage_removed.parquet")
 model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, data=leverage_removed)
 summary(model0)
 # plot(model0)
@@ -89,7 +89,10 @@ if(OUTPUT_TABLES){
 anova(model1, model0)
 
 ################### Modelling - Hierarchical ###################
-model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
+leverage_removed$std_log_price = scale(log(leverage_removed$price))
+
+# model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
+model2 = lmer(std_log_price ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
 summary(model2)
 # xtable(coef(summary(model2)))
 

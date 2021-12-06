@@ -24,6 +24,7 @@ dfbuy = dfbuy %>% filter(square_meters <= dfbuy_cutoff & rooms != "Shared")
 
 dfbuy$rooms = droplevels(dfbuy$rooms)
 
+OUTPUT_TABLES = TRUE
 ####################################################
 ################### SALES UNITS ####################
 ####################################################
@@ -58,20 +59,36 @@ model0 = lm(log(price) ~ object_type + private_offer + rooms + square_meters, da
 summary(model0)
 # plot(model0)
 
+if(OUTPUT_TABLES){
+  print(xtable(summary(model1)), file="documents/scripts_output/sales_model0_summary.tex")
+}
+
 # room x sqm interaction
 model1 = lm(log(price) ~ object_type + private_offer + rooms * square_meters, data=leverage_removed)
 summary(model1)
 # plot(model1)
 
+if(OUTPUT_TABLES){
+  print(xtable(summary(model1)), file="documents/scripts_output/sales_model1_summary.tex")
+}
+
 anova(model1, model0)
 
 ################### Modelling - Hierarchical ###################
-model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
+# CAUTION vvvvvvvvvvvvvvvvvvvvv
+leverage_removed$std_log_price = scale(log(leverage_removed$price))
+
+# model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
+model2 = lmer(std_log_price ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
 summary(model2)
 # xtable(coef(summary(model2)))
 
 anova(model2, model1)
 dotplot(ranef(model2))
+
+if(OUTPUT_TABLES){
+  print(xtable(summary(model1)), file="documents/scripts_output/sales_model2_summary.tex")
+}
 
 
 ## Export Section
