@@ -60,7 +60,7 @@ summary(model0)
 # plot(model0)
 
 if(OUTPUT_TABLES){
-  print(xtable(summary(model1)), file="documents/scripts_output/sales_model0_summary.tex")
+  print(xtable(summary(model0)), file="documents/scripts_output/sales_model0_summary.tex")
 }
 
 # room x sqm interaction
@@ -73,7 +73,7 @@ if(OUTPUT_TABLES){
 }
 
 anova(model1, model0)
-
+write_parquet(leverage_removed, "data/intermediaries/sales_leverage_removed.parquet")
 ################### Modelling - Hierarchical ###################
 # CAUTION vvvvvvvvvvvvvvvvvvvvv
 leverage_removed$std_log_price = scale(log(leverage_removed$price))
@@ -87,7 +87,7 @@ anova(model2, model1)
 dotplot(ranef(model2))
 
 if(OUTPUT_TABLES){
-  print(xtable(summary(model1)), file="documents/scripts_output/sales_model2_summary.tex")
+  print(xtable(summary(model2)$coefficients), file="documents/scripts_output/sales_model2_summary.tex")
 }
 
 
