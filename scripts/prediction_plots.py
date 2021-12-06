@@ -1,6 +1,9 @@
 #%%
+from matplotlib.lines import _LineStyle
 from pandas.core.reshape.merge import merge
 import statsmodels.formula.api as smf
+import statsmodels.api as sm
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -23,13 +26,16 @@ DUKEBLUE = "#00339B"
 
 catcols = ["object_type", "rooms", "zip_code"]
 #%%
-#--------------------------- Rentals ---------------------------------
-rentals_leverage_removed = pd.read_parquet(ROOT_DIR + "data/intermediaries/rentals_leverage_removed.parquet")
+# --------------------------- Rentals ---------------------------------
+rentals_leverage_removed = pd.read_parquet(
+    ROOT_DIR + "data/intermediaries/rentals_leverage_removed.parquet"
+)
 rentals_leverage_removed[catcols] = rentals_leverage_removed[catcols].astype("category")
 
 #%%
 rentals_model1 = smf.ols(
-    "np.log(price) ~ object_type + private_offer + rooms * square_meters", data=rentals_leverage_removed
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters",
+    data=rentals_leverage_removed,
 )
 rentals_model1_result = rentals_model1.fit()
 print(rentals_model1_result.summary())
@@ -43,24 +49,64 @@ rentals_model2_results = rentals_model2.fit()
 print(rentals_model2_results.summary())
 
 #%%
-#--------------------------- Sales ---------------------------------
-sales_leverage_removed = pd.read_parquet(ROOT_DIR + "data/intermediaries/sales_leverage_removed.parquet")
+# --------------------------- Sales ---------------------------------
+sales_leverage_removed = pd.read_parquet(
+    ROOT_DIR + "data/intermediaries/sales_leverage_removed.parquet"
+)
 sales_leverage_removed[catcols] = sales_leverage_removed[catcols].astype("category")
 
 #%%
 sales_model1 = smf.ols(
-    "np.log(price) ~ object_type + private_offer + rooms * square_meters", data=sales_leverage_removed
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters",
+    data=sales_leverage_removed,
 )
 sales_model1_result = sales_model1.fit()
 print(sales_model1_result.summary())
 
-sales_model2 = smf.mixedlm(
-    "np.log(price) ~ object_type + private_offer + rooms * square_meters",
-    data=sales_leverage_removed,
-    groups=sales_leverage_removed["zip_code"],
+# Convergence error
+# sales_model2 = smf.mixedlm(
+#     "np.log(price) ~ object_type + private_offer + rooms * square_meters",
+#     data=sales_leverage_removed,
+#     groups=sales_leverage_removed["zip_code"],
+# )
+# sales_model2_results = sales_model2.fit()
+# print(sales_model2_results.summary())
+
+
+#%%
+# --------------------------- Model Assessment ---------------------------------
+USE_MODEL = rentals_model1_result
+USE_DF = rentals_leverage_removed
+
+preds = USE_MODEL.predict(USE_DF)
+comp_df = pd.DataFrame(
+    {
+        "pred": preds,
+        "ytrue": np.log(USE_DF["price"]),
+    }
+).assign(delta=lambda df: df["ytrue"] - df["pred"])
+
+
+fig, axes = plt.subplots(1, 2, figsize=(20, 6))
+
+sns.scatterplot(
+    data=comp_df, x="pred", y="delta", alpha=0.075, ax=axes[0], color=DUKEBLUE, zorder=10
 )
-sales_model2_results = sales_model2.fit()
-print(sales_model2_results.summary())
+axes[0].axhline(0, color="0.7", linestyle="--", zorder=-1)
+sns.despine()
+axes[0].set_xlabel("Fitted Values")
+axes[0].set_ylabel("Residuals")
+axes[0].set_ylim(-2.5, 2.5)
+
+sm.qqplot(
+    comp_df["delta"],
+    stats.norm(loc=comp_df["delta"].mean(), scale=comp_df["delta"].std()),
+    line="45",
+    ax=axes[1],
+    color=DUKEBLUE,
+)
+
+axes[1].set_xlim(-2, 2)
 
 #%%
 
@@ -124,10 +170,12 @@ example_prop = pd.DataFrame(
 )
 
 cheap = np.exp(
-    rentals_model2_results.predict(example_prop) + rentals_model2_results.random_effects["13059"]["Group"]
+    rentals_model2_results.predict(example_prop)
+    + rentals_model2_results.random_effects["13059"]["Group"]
 ).iloc[0]
 expensive = np.exp(
-    rentals_model2_results.predict(example_prop) + rentals_model2_results.random_effects["10117"]["Group"]
+    rentals_model2_results.predict(example_prop)
+    + rentals_model2_results.random_effects["10117"]["Group"]
 ).iloc[0]
 
 print(f"{cheap = :.2f}€")
