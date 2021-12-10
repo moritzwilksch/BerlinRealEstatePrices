@@ -80,7 +80,7 @@ df[which(df$rooms %in% c("Zimmer k.A.", "k.A. Zimmer", "0")), "rooms"] = NA  # k
 
 df[which(df$rooms %in% c("Privatzimmer", "Einzelzimmer")), "rooms"] = "1"  # Privatzimmer <=> Private room, Einzelzimmer <=> Sinlge room
 levels(df$rooms) = c(levels(df$rooms), "Shared", "Missing")
-df[which(df$rooms == "Gemeinsames Zimmer"), "rooms"] = "Shared"  # Geimeinsames Zimmer <=> Shared room
+df[which(df$rooms == "Gemeinsames Zimmer"), "rooms"] = "Shared"  # Gemeinsames Zimmer <=> Shared room
 df[which(is.na(df$rooms)), "rooms"] = "Missing"
 
 # Exclude anything with more than 5 rooms or anything that only occurs once
