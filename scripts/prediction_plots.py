@@ -1,6 +1,4 @@
 #%%
-from matplotlib.lines import _LineStyle
-from pandas.core.reshape.merge import merge
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
 import scipy.stats as stats
@@ -113,7 +111,9 @@ axes[1].set_xlim(-2, 2)
 USE_MODEL = rentals_model2_results
 
 preds = np.exp(USE_MODEL.predict(rentals_leverage_removed))
-_df = pd.concat([rentals_leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1)
+_df = pd.concat(
+    [rentals_leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1
+)
 
 room_order = [
     "Missing",
@@ -134,17 +134,27 @@ palette = {
     "HOLIDAY_HOUSE_APARTMENT": "white",
 }
 sns.pointplot(
-    data=_df, x="rooms", y="preds", hue="object_type", palette=palette, ax=ax, order=room_order
+    data=_df,
+    x="rooms",
+    y="preds",
+    hue="object_type",
+    palette=palette,
+    ax=ax,
+    order=room_order,
 )
 
-label_yvals = _df.query("rooms == '5'").groupby("object_type")["preds"].mean().dropna().to_dict()
+label_yvals = (
+    _df.query("rooms == '5'").groupby("object_type")["preds"].mean().dropna().to_dict()
+)
 label_yvals["APARTMENT"] = label_yvals["APARTMENT"] * 0.9
 label_yvals["HOUSE"] = label_yvals["HOUSE"] * 1.025
 label_yvals["TEMPORARY_LIVING"] = label_yvals["TEMPORARY_LIVING"] * 0.9
 label_yvals["SHARED_APARTMENT"] = label_yvals["SHARED_APARTMENT"] * 1.1
 
 for label, yval in label_yvals.items():
-    ax.text(6.2, yval, label, verticalalignment="center", weight="bold", color=palette[label])
+    ax.text(
+        6.2, yval, label, verticalalignment="center", weight="bold", color=palette[label]
+    )
 
 ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: "€{:,.0f}".format(y)))
 ax.set_xlabel("Number of Rooms")
@@ -155,7 +165,9 @@ ax.set_xlim(0, 6.1)
 ax.legend([], frameon=False)
 plt.tight_layout()
 sns.despine()
-plt.savefig(ROOT_DIR + "documents/plots/predplot_rooms_objtype.png", dpi=300, facecolor="w")
+plt.savefig(
+    ROOT_DIR + "documents/plots/predplot_rooms_objtype.png", dpi=300, facecolor="w"
+)
 
 
 #%%
@@ -215,9 +227,13 @@ def plot_geoplot(type_: str, fig, ax):
 
     # home = gpd.read_file(ROOT_DIR + "data/home.geojson")
 
-    merged = pd.merge(geodf.rename({"plz": "zip"}, axis=1), df_dotplot, on="zip", how="left")
+    merged = pd.merge(
+        geodf.rename({"plz": "zip"}, axis=1), df_dotplot, on="zip", how="left"
+    )
     merged = merged.assign(
-        pointestimate_sig=merged.apply(lambda row: is_sig(row["pointestimate"], row["err"]), axis=1)
+        pointestimate_sig=merged.apply(
+            lambda row: is_sig(row["pointestimate"], row["err"]), axis=1
+        )
     )
 
     streets = gpd.read_file("../../../brb_geo/gis_osm_roads_free_1.shp", bbox=BBOX)
@@ -273,66 +289,80 @@ merged_rentals = plot_geoplot("rentals", fig, axes[0])
 merged_sales = plot_geoplot("sales", fig, axes[1])
 
 
-plt.savefig(ROOT_DIR + "documents/plots/geoplot_rentals_and_sales.png", dpi=300, facecolor="w")
+plt.savefig(
+    ROOT_DIR + "documents/plots/geoplot_rentals_and_sales.png", dpi=300, facecolor="w"
+)
 
 #%%
 
 
 #%%
-merged = merged_rentals  # CAUTION
-
-fig, ax = plt.subplots(figsize=(10, 6))
-
-mitte = geodf.query("plz == '10117'").to_crs(epsg=32642).centroid.to_frame().set_geometry(0)
-mitte_df = mitte.sjoin_nearest(
-    merged.to_crs(epsg=32642), how="right", distance_col="dist_to_mitte"
-).assign(dist_to_mitte=lambda x: x["dist_to_mitte"] / 1000)
 
 
-# calculate cheap & expensive points
-regline = smf.ols("np.exp(pointestimate_sig) ~ dist_to_mitte", data=mitte_df).fit()
-preds = regline.predict(mitte_df)
-deltas = np.exp(mitte_df["pointestimate_sig"]) - preds
-expensive_cutoff = np.nanquantile(deltas, 0.975)
-cheap_cutoff = np.nanquantile(deltas, 0.025)
+def create_dist_to_mitte_plot(merged_df, ax, title):
+    mitte = (
+        geodf.query("plz == '10117'")
+        .to_crs(epsg=32642)
+        .centroid.to_frame()
+        .set_geometry(0)
+    )
+    mitte_df = mitte.sjoin_nearest(
+        merged_df.to_crs(epsg=32642), how="right", distance_col="dist_to_mitte"
+    ).assign(dist_to_mitte=lambda x: x["dist_to_mitte"] / 1000)
 
-# plot
-sns.scatterplot(
-    data=mitte_df.loc[deltas > expensive_cutoff, :],
-    color="red",
-    x="dist_to_mitte",
-    y=np.exp(mitte_df["pointestimate_sig"]),
-    ax=ax,
-)
-sns.scatterplot(
-    data=mitte_df.loc[deltas < cheap_cutoff, :],
-    color="green",
-    x="dist_to_mitte",
-    y=np.exp(mitte_df["pointestimate_sig"]),
-    ax=ax,
-)
-sns.scatterplot(
-    data=mitte_df.loc[(deltas < expensive_cutoff) & (deltas > cheap_cutoff), :],
-    color=DUKEBLUE,
-    x="dist_to_mitte",
-    y=np.exp(mitte_df["pointestimate_sig"]),
-    ax=ax,
-)
+    # calculate cheap & expensive points
+    regline = smf.ols("np.exp(pointestimate_sig) ~ dist_to_mitte", data=mitte_df).fit()
+    preds = regline.predict(mitte_df)
+    deltas = np.exp(mitte_df["pointestimate_sig"]) - preds
+    expensive_cutoff = np.nanquantile(deltas, 0.975)
+    cheap_cutoff = np.nanquantile(deltas, 0.025)
 
-# details
-ax.axhline(1, color="0.7", linestyle="--")
-# good_deal = ["13627", "12057", "10969"]
-good_deal = mitte_df.loc[deltas < cheap_cutoff, "zip"].values
+    # plot
+    sns.scatterplot(
+        data=mitte_df.loc[deltas > expensive_cutoff, :],
+        color="red",
+        x="dist_to_mitte",
+        y=np.exp(mitte_df["pointestimate_sig"]),
+        ax=ax,
+    )
+    sns.scatterplot(
+        data=mitte_df.loc[deltas < cheap_cutoff, :],
+        color="green",
+        x="dist_to_mitte",
+        y=np.exp(mitte_df["pointestimate_sig"]),
+        ax=ax,
+    )
+    sns.scatterplot(
+        data=mitte_df.loc[(deltas < expensive_cutoff) & (deltas > cheap_cutoff), :],
+        color=DUKEBLUE,
+        x="dist_to_mitte",
+        y=np.exp(mitte_df["pointestimate_sig"]),
+        ax=ax,
+    )
 
-_annot_df = mitte_df.query("zip.isin(@good_deal)")
-for x, y, zipcode in zip(
-    _annot_df["dist_to_mitte"], np.exp(_annot_df["pointestimate_sig"]), _annot_df["zip"]
-):
-    ax.text(x, y - 0.05, str(zipcode), ha="right", size=8)
+    # details
+    ax.axhline(1, color="0.7", linestyle="--")
+    # good_deal = ["13627", "12057", "10969"]
+    good_deal = mitte_df.loc[deltas < cheap_cutoff, "zip"].values
 
-ax.set_title("Distance to Mitte (km) vs. Multiplicative Price Effect", weight="bold")
-ax.set_xlabel("Distance to Mitte (km)")
-ax.set_ylabel("Multiplicative Price Effect")
+    _annot_df = mitte_df.query("zip.isin(@good_deal)")
+    for x, y, zipcode in zip(
+        _annot_df["dist_to_mitte"],
+        np.exp(_annot_df["pointestimate_sig"]),
+        _annot_df["zip"],
+    ):
+        ax.text(x - 0.25, y, str(zipcode), ha="right", va="center", size=10)
+
+    ax.set_title(title, weight="bold")
+    ax.set_xlabel("Distance to Mitte (km)")
+    ax.set_ylabel("Multiplicative Price Effect")
+
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+create_dist_to_mitte_plot(merged_rentals, axes[0], title="Rentals")
+create_dist_to_mitte_plot(merged_sales, axes[1], title="Sales")
+
+fig.suptitle("Distance to Mitte (km) vs. Multiplicative Price Effect", weight="bold")
 sns.despine()
 plt.tight_layout()
 plt.savefig(ROOT_DIR + "documents/plots/dist_to_mitte.png", dpi=300, facecolor="w")
