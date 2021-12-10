@@ -4,7 +4,7 @@ library(ggplot2)
 library(lme4)
 library(lattice)
 
-dfall = read_parquet("data/berlin_clean.parquet") # NAs???????????????
+dfall = read_parquet("data/berlin_clean.parquet")
 
 dfrent = dfall %>% filter(to_rent == TRUE & ! object_type %in% c("HOLIDAY_HOUSE_APARTMENT", "HOUSE"))
 dfrent$object_type = droplevel(dfrent$object_type)
@@ -40,7 +40,7 @@ all_new = rbind(dfrent, dfbuy)
 dfrent = all_new %>% filter(to_rent == TRUE)
 dfbuy = all_new %>% filter(to_rent == FALSE)
 
-dfbuy = dfbuy %>% filter(price < 21474836)  # integer overflow in DB?
+dfbuy = dfbuy %>% filter(price < 21474836)  # integer overflow in DB
 x = dfbuy %>% filter(grepl("Vermittlung", title) | grepl("Prämie", title))  # remove calls for mediation of properties for premium
 
 write_parquet(dfrent, "data/dfrent.parquet")
