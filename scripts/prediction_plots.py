@@ -43,8 +43,8 @@ rentals_model2 = smf.mixedlm(
     data=rentals_leverage_removed,
     groups=rentals_leverage_removed["zip_code"],
 )
-rentals_model2_results = rentals_model2.fit()
-print(rentals_model2_results.summary())
+rentals_model2_result = rentals_model2.fit()
+print(rentals_model2_result.summary())
 
 #%%
 # --------------------------- Sales ---------------------------------
@@ -61,22 +61,32 @@ sales_model1 = smf.ols(
 sales_model1_result = sales_model1.fit()
 print(sales_model1_result.summary())
 
-# Convergence error
-# sales_model2 = smf.mixedlm(
-#     "np.log(price) ~ object_type + private_offer + rooms * square_meters",
-#     data=sales_leverage_removed,
-#     groups=sales_leverage_removed["zip_code"],
-# )
-# sales_model2_results = sales_model2.fit()
-# print(sales_model2_results.summary())
+
+sales_model2 = smf.mixedlm(
+    "np.log(price) ~ object_type + private_offer + rooms * square_meters",
+    data=sales_leverage_removed,
+    groups=sales_leverage_removed["zip_code"],
+)
+sales_model2_result = sales_model2.fit()
+print(sales_model2_result.summary())
 
 
 #%%
 # --------------------------- Model Assessment ---------------------------------
-USE_MODEL = rentals_model1_result
-USE_DF = rentals_leverage_removed
+USE_MODEL = sales_model2_result
+USE_DF = sales_leverage_removed
+
 
 preds = USE_MODEL.predict(USE_DF)
+try:
+    ranefs = [
+        USE_MODEL.random_effects[zipcode]["Group"] for zipcode in USE_DF["zip_code"]
+    ]
+    preds = preds + pd.Series(ranefs)
+except:
+    print("No random effects!")
+
+
 comp_df = pd.DataFrame(
     {
         "pred": preds,
@@ -106,11 +116,31 @@ sm.qqplot(
 
 axes[1].set_xlim(-2, 2)
 
+_name = (
+    "rentals_model2"
+    if USE_MODEL == rentals_model2_result
+    else "sales_model2"
+    if USE_MODEL == sales_model2_result
+    else "rentals_model1"
+    if USE_MODEL == rentals_model1_result
+    else "sales_model1"
+)
+
+plt.savefig(ROOT_DIR + f"documents/plots/assessment_{_name}.png", dpi=300, facecolor="w")
+
 #%%
 
-USE_MODEL = rentals_model2_results
+USE_MODEL = rentals_model2_result
 
 preds = np.exp(USE_MODEL.predict(rentals_leverage_removed))
+try:
+    ranefs = [
+        USE_MODEL.random_effects[zipcode]["Group"] for zipcode in USE_DF["zip_code"]
+    ]
+    preds = preds + pd.Series(ranefs)
+except:
+    print("No random effects!")
+
 _df = pd.concat(
     [rentals_leverage_removed, pd.DataFrame(preds, columns=["preds"])], axis=1
 )
@@ -182,19 +212,18 @@ example_prop = pd.DataFrame(
 )
 
 cheap = np.exp(
-    rentals_model2_results.predict(example_prop)
-    + rentals_model2_results.random_effects["13059"]["Group"]
+    rentals_model2_result.predict(example_prop)
+    + rentals_model2_result.random_effects["13059"]["Group"]
 ).iloc[0]
 expensive = np.exp(
-    rentals_model2_results.predict(example_prop)
-    + rentals_model2_results.random_effects["10117"]["Group"]
+    rentals_model2_result.predict(example_prop)
+    + rentals_model2_result.random_effects["10117"]["Group"]
 ).iloc[0]
 
 print(f"{cheap = :.2f}€")
 print(f"{expensive = :.2f}€")
 
 #%%
-USE_RENTALS = False
 #################### Random Effects by ZIP ####################
 def is_sig(pointestimate, err):
     if pointestimate < 0 and pointestimate + err * 1.96 >= 0:
@@ -275,7 +304,7 @@ def plot_geoplot(type_: str, fig, ax):
 
     plt.tight_layout()
 
-    fig.colorbar(ax.collections[0], ax=ax, label="Random Intercept", shrink=0.5)
+    fig.colorbar(ax.collections[0], ax=ax, label="Random Intercept", shrink=0.75)
 
     streets.plot(color="0.8", ax=ax, zorder=-1)
     ax.set_xlim(13, 13.8)
@@ -284,7 +313,7 @@ def plot_geoplot(type_: str, fig, ax):
     return merged
 
 
-fig, axes = plt.subplots(1, 2, figsize=(15, 9))
+fig, axes = plt.subplots(1, 2, figsize=(15,6))
 merged_rentals = plot_geoplot("rentals", fig, axes[0])
 merged_sales = plot_geoplot("sales", fig, axes[1])
 
