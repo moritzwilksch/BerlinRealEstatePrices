@@ -80,10 +80,10 @@ We can see that while the coefficients for the `square_meters`, `private_offer`,
 
 The random intercepts by zip code are can also be visualized on a geographic map (grey indicates non-significant random intercepts). The model has clearly learned that areas close to the city center (Mitte) are more expensive than the outskirts of Berlin (with some exceptions) and that cheaper rentals can generally be found in the north-east and north-west parts of Berlin.  
 
-![Map of Random Intercepts by zip code](plots/geoplot_rentals_and_sales.png)
+### ![Map of Random Intercepts by zip code](plots/geoplot_rentals_and_sales.png)
 
 
-To further analyse how the distance from the city center affects the random intercept (and therefore the predicted price of the listing), the following plot graphs the geographical distance of each zip code are to the city center against its random intercept. Generally speaking, we see a negative linear relationship, where zip code areas that are far from the city center tend to be less expensive. However, we can also see that some zip codes are especially cheap (or expensive) given their distance from the center. Highlighted in red (expensive) and green (cheap) are the points with the top 2.5% largest absolute difference from a best-fit linear model in either direction (where the linear model regresses the multiplicative price effect on the distance to the city center).
+To further analyse how the distance from the city center affects the random intercept (and therefore the predicted price of the listing), the following plot graphs the geographical distance of each zip code are to the city center against its random intercept. Generally speaking, we see a negative linear relationship, where zip code areas that are far from the city center tend to be less expensive. However, we can also see that some zip codes are especially cheap (or expensive) given their distance from the center. Highlighted in red (expensive) and green (cheap) are the points with the top 2.5% largest absolute difference from a best-fit linear model in either direction (where the linear model regresses the multiplicative price effect on the distance to the city center). The plot indicates that zip codes like 13627 are relatively cheap considering their distance to the city center.
 
 ### ![Distance to Mitte vs. multiplicative price effect](plots/dist_to_mitte.png)
 
