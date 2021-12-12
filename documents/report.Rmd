@@ -63,16 +63,27 @@ The initial model is regressing the `log(price)` on the predictors `object_type`
 - Model assessment
 
 ## Hierarchical Linear Model
-Since the price is expected to vary heavily by geographical area, it makes sense to include the location of a listing in the model. The location for this data set can only be determined on a zip code level, however, this should suffice to tell apart cheap from expensive neighborhoods as zip code ares in Berlin are rather small. Thus, I construct the same linear model as described above (including the significant interaction term), but this time add the zip code as a level of random intercept. This way, each zip code area is allowed to have a different "baseline price" from which apartment features determine the final price. The figure below visualizes the *fixed effects* of both models (large differences in **bold**). 
+Since the price is expected to vary heavily by geographical area, it makes sense to include the location of a listing in the model. The location for this data set can only be determined on a zip code level, however, this should suffice to tell apart cheap from expensive neighborhoods as zip code ares in Berlin are rather small. Thus, I construct the same linear model as described above (including the significant interaction term), but this time add the zip code as a level of random intercept. This way, each zip code area is allowed to have a different "baseline price" from which apartment features determine the final price. 
+
+
+- VIF
+
+
+```{r, eval=FALSE}
+The figure below visualizes the *fixed effects* of both models (large differences in **bold**). 
 We can see that while the coefficients for the `square_meters`, `private_offer`, and the `square_meters` $\times$ `rooms` interaction are similar in sign and magnitude, the coefficients for `rooms` as well as `obj_tpyeHOUSE` are quite different between rental and sales units. This indicates that units with more rooms (4 or 5) warrant a large price increase for sales but not so much for rentals.
 
 ### ![Comparison of fixed effects for rentals and sales model](plots/compare_coefs.png)
+```
 
-The random intercepts by zip code are can also be visualized on a geographic map (Grey indicates non-significant random intercepts). The model has clearly learned that areas close to the city center (Mitte) are more expensive than the outskirts of Berlin (with some exceptions) and that cheaper rentals can generally be found in the north-east and north-west parts of Berlin. 
+
+
+The random intercepts by zip code are can also be visualized on a geographic map (grey indicates non-significant random intercepts). The model has clearly learned that areas close to the city center (Mitte) are more expensive than the outskirts of Berlin (with some exceptions) and that cheaper rentals can generally be found in the north-east and north-west parts of Berlin.  
+
 ### ![Map of Random Intercepts by zip code](plots/geoplot_rentals_and_sales.png)
 
 
-To Further scrutinize how the distance from the city center affects the random intercept (and therefore the predicted price of the listing), the following plot graphs the geographical distance of each zip code are to the city center against its random intercept.
+To further analyse how the distance from the city center affects the random intercept (and therefore the predicted price of the listing), the following plot graphs the geographical distance of each zip code are to the city center against its random intercept. Generally speaking, we see a negative linear relationship, where zip code areas that are far from the city center tend to be less expensive. However, we can also see that some zip codes are especially cheap (or expensive) given their distance from the center. Highlighted in red (expensive) and green (cheap) are the points with the top 2.5% largest absolute difference from a best-fit linear model in either direction (where the linear model regresses the multiplicative price effect on the distance to the city center). The plot indicates that zip codes like 13627 are relatively cheap considering their distance to the city center.
 
 ### ![Distance to Mitte vs. multiplicative price effect](plots/dist_to_mitte.png)
 
