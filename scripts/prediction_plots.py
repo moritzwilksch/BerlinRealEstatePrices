@@ -325,7 +325,7 @@ merged_sales = plot_geoplot("sales", fig, axes[1])
 
 
 plt.savefig(
-    ROOT_DIR + "documents/plots/geoplot_rentals_and_sales.png", dpi=300, facecolor="w"
+    ROOT_DIR + "documents/plots/geoplot_rentals_and_sales.png", dpi=300, facecolor="w", bbox_inches="tight"
 )
 
 #%%
@@ -393,11 +393,11 @@ def create_dist_to_mitte_plot(merged_df, ax, title):
     ax.set_ylabel("Multiplicative Price Effect")
 
 
-fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+fig, axes = plt.subplots(1, 2, figsize=(15, 5))
 create_dist_to_mitte_plot(merged_rentals, axes[0], title="Rentals")
 create_dist_to_mitte_plot(merged_sales, axes[1], title="Sales")
 
 fig.suptitle("Distance to Mitte (km) vs. Multiplicative Price Effect", weight="bold")
 sns.despine()
 plt.tight_layout()
-plt.savefig(ROOT_DIR + "documents/plots/dist_to_mitte.png", dpi=300, facecolor="w")
+plt.savefig(ROOT_DIR + "documents/plots/dist_to_mitte.png", dpi=300, facecolor="w", bbox_inches="tight")
