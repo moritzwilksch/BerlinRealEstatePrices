@@ -1,5 +1,5 @@
 ---
-title: "\\vspace{-2cm}**The Berlin Real Estate Market**"
+title: "\\vspace{-2cm}**The Berlin Real Estate Market**^[https://github.com/moritzwilksch/BerlinRealEstatePrices]"
 author: "Moritz Wilksch"
 output: pdf_document
 ---
@@ -58,6 +58,7 @@ To model the relationship between prices and object attributes, I will use separ
 # Results
 ## Non-hierarchical Linear Model
 The initial model is regressing the `log(price)` on the predictors `object_type`, `private_offer`, `rooms`, and `square_meters`. The log transformation of the dependent variable is necessary, as the price is log-normally distributed, so not transforming it leads to severe assumption violations. This initial model achieves an $R^2 \approx 0.65$ for rentals ($R^2 \approx 0.54$ for sales) after removing three (12 for sales) high-leverage points. Thus, it already explains a significant portion of the variance in `log(price)`. All predictors turn out to be significant for modeling both rental and sales prices. As the EDA suggests a potential interaction between `rooms` and `square_meters`, I build a second version of the model using this interaction. Comparing the two versions of the model with an ANOVA test (for both rentals and sales respectively) suggests that adding the interaction to the model is helpful in explaining more variance in the dependent variables as the models with interactions have an $R^2 \approx 0.68$ and $R^2 \approx 0.62$ respectively. We can see that the model is able to explain slightly more variance in rental prices compared to sales prices and that including the interaction - while valuable for both models - helps more for modeling sales prices than it does for rent. This might indicate that forecasting sales prices of properties is a harder task than forecasting rental prices. The coefficients for both model are shown in *Appendix B*.  
+The model assessment plots provide further evidence for the claim that modeling rental prices is easier than modeling sales prices.
 
 - ANOVA Table?
 - Model assessment
@@ -81,6 +82,16 @@ To further analyse how the distance from the city center affects the random inte
 ### Distribution of `rooms`
 
 ### ![Distribution of `rooms`](plots/rooms_distribution_rentbuy.png)
+
+## (B) Model Assessment
+### Rentals
+### ![](plots/assessment_rentals_model1.png)
+### ![](plots/assessment_rentals_model2.png)
+
+\newpage
+### Sales
+### ![](plots/assessment_sales_model1.png)
+### ![](plots/assessment_sales_model2.png)
 
 \newpage
 ## (B) Coefficients for non-hierarchical linear model
