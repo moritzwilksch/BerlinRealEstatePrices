@@ -116,17 +116,23 @@ sm.qqplot(
 
 axes[1].set_xlim(-2, 2)
 
-_name = (
-    "rentals_model2"
-    if USE_MODEL == rentals_model2_result
-    else "sales_model2"
-    if USE_MODEL == sales_model2_result
-    else "rentals_model1"
-    if USE_MODEL == rentals_model1_result
-    else "sales_model1"
-)
+from sklearn.metrics import r2_score
 
+r2 = r2_score(np.log(USE_DF["price"]), preds)
+print(f"R^2 = {r2}")
+
+_name, title = (
+    ("rentals_model2", f"Rentals: Hierarchical Model, $R^2$ = {r2:.2f}")
+    if USE_MODEL == rentals_model2_result
+    else ("sales_model2", f"Sales: Hierarchical Model, $R^2$ = {r2:.2f}")
+    if USE_MODEL == sales_model2_result
+    else ("rentals_model1", f"Rentals: Non-Hierarchical Model, $R^2$ = {r2:.2f}")
+    if USE_MODEL == rentals_model1_result
+    else ("sales_model1", f"Sales: Non-Hierarchical Model, $R^2$ = {r2:.2f}")
+)
+fig.suptitle(title, size=18, weight="bold")
 plt.savefig(ROOT_DIR + f"documents/plots/assessment_{_name}.png", dpi=300, facecolor="w")
+
 
 #%%
 
@@ -313,7 +319,7 @@ def plot_geoplot(type_: str, fig, ax):
     return merged
 
 
-fig, axes = plt.subplots(1, 2, figsize=(15,6))
+fig, axes = plt.subplots(1, 2, figsize=(15, 6))
 merged_rentals = plot_geoplot("rentals", fig, axes[0])
 merged_sales = plot_geoplot("sales", fig, axes[1])
 
