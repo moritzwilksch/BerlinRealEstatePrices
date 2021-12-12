@@ -40,7 +40,7 @@ _ = [ax.margins(x=0) for ax in axes]
 fig.suptitle("Price Distribution of Listings", weight="bold")
 sns.despine()
 plt.tight_layout()
-plt.savefig(ROOT_DIR + "documents/plots/price_distribution_rentbuy.png", dpi=300, facecolor="w")
+plt.savefig(ROOT_DIR + "documents/plots/price_distribution_rentbuy.png", dpi=300, facecolor="w", bbox_inches="tight")
 
 #%%
 ################## Rent Price vs. SQM by private offer ##################
