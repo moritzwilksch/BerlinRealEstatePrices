@@ -11,7 +11,7 @@ Statistical analysis of Berlin real estate prices for [IDS702 class](https://ids
   - Linear Regression
   - Hierarchical linear model with random intercepts
  
- # Results
+ # Results 🔬
 *You can download the full report [here](https://github.com/moritzwilksch/BerlinRealEstatePrices/raw/main/documents/report.pdf). It highlights...*
 ### The relationship between property attributes and price
 > 🔑 Take aways:
