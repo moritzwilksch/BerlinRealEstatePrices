@@ -75,11 +75,11 @@ if(OUTPUT_TABLES){
 anova(model1, model0)
 write_parquet(leverage_removed, "data/intermediaries/sales_leverage_removed.parquet")
 ################### Modelling - Hierarchical ###################
-# CAUTION vvvvvvvvvvvvvvvvvvvvv
+# CAUTION vvvvvvvvvvvvvvvvvvvvv Standard scaling price here
 leverage_removed$std_log_price = scale(log(leverage_removed$price))
 
-# model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
-model2 = lmer(std_log_price ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
+model2 = lmer(log(price) ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
+# model2 = lmer(std_log_price ~ object_type + private_offer + rooms * square_meters + (1 | zip_code), data=leverage_removed)
 summary(model2)
 # xtable(coef(summary(model2)))
 
@@ -100,3 +100,17 @@ xdf$zip = rownames(xdf)
 xdf$X.Intercept. = NULL
 write_parquet(xdf, "data/intermediaries/ranef_by_zipcode_sales.parquet")
 #######################
+
+
+################## Model Assessment ###################
+assess_df = data.frame(preds = fitted(model2), ytrue=log(leverage_removed$price))
+assess_df$residuals = assess_df$preds - assess_df$ytrue
+ggplot(data=assess_df, aes(x=preds, y=residuals)) + geom_point(alpha=0.2) + theme_bw()
+ggplot(data=assess_df, aes(sample=residuals)) + geom_qq() + geom_qq_line() + theme_bw()
+
+
+
+################ Checking Missingness ################
+missing_mod = glm((dfbuy$rooms == "Missing") ~ object_type + private_offer + square_meters, family=binomial, data=dfbuy)
+summary(missing_mod)
+

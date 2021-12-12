@@ -1,6 +1,9 @@
 *.lock
 *.dirlock
-*Rproj
+*.Rproj
+.Rhistory
+.RData
+*.DS_Store
 
 .DS_Store
 # Byte-compiled / optimized / DLL files
