@@ -27,13 +27,11 @@ The web scraping of the real estate listings was conducted over a period of five
 ## EDA
 
 Even after data cleaning the distributions of rental and sales prices are still skewed. This might lead to problems when fitting linear models, but log-transforming could be a potential remedy to this issue in the modeling phase.
-Moreover, the univariate distribution of the number of rooms (*Appendix A*) reveals that properties for sale tend to have more rooms and that rental properties have more missing data in this variable than properties for sale. To check the kind of missingness in this variable, I fit a logistic regression model regressing the indicator of whether the `room` variable is missong on all mean effects except for room. The model indicates the values are *missing at random* for both rentals and sales, as the predictors are able to model whether the number of rooms are missing. For example, for rentals, all object types are more likely to have a missing number of rooms that *Apartments*. Private offers are less likely to miss this information. For properties for sale, Houses and privately offered listings are more likely to have a missing number of rooms.
+Moreover, the univariate distribution of the number of rooms (*Appendix A*) reveals that properties for sale tend to have more rooms and that rental properties have more missing data in this variable than properties for sale. To check the kind of missingness in this variable, I fit a logistic regression model regressing the indicator of whether the `room` variable is missing on all mean effects except for room. The model indicates the values are *missing at random* for both rentals and sales, as the predictors are able to model whether the number of rooms are missing. For example, for rentals, all object types are more likely to have a missing number of rooms that *Apartments*. Private offers are less likely to miss this information. For properties for sale, Houses and privately offered listings are more likely to have a missing number of rooms.
 
-### ![Distribution of `price`](plots/price_distribution_rentbuy.png)
+![](plots/price_distribution_rentbuy.png)
 
-- square meters
-
-
+It is worth noting that the distribution of the `square_meters` variable includes severe outliers that can only be attributed to data entry errors, which will require special attention for data cleaning. 
 To asses whether any interactions between variables might be valuable to the model, I plot the relationship between `price` and `square_meters` faceted by `rooms`. While the trend is positive in all categories, the magnitudes differ, thus it is worth testing it during modeling. Interactions with `object_type` were not examined, as it contains categories with very few values.
 
 ## Data Cleaning
@@ -50,7 +48,7 @@ Some properties for sale listings have an unrealistic price of exactly 21,474,83
 Finally, to remove data entry errors like unreasonably large apartments, I remove outliers in the `square_meters` variable at the 99.9th percentile for rental properties and properties for sale separately. This only removes a hand full of data points which severely skew the distribution due to erroneous data. 
 The entire data cleaning process and its effect on the sample size $n$ is displayed in the flowchart below.
 
-### ![Flowchart of data preprocessing](plots/n_flowchart.pdf)
+![](plots/n_flowchart.pdf)
 
 After this data cleaning process, the only variable that contains missing values is `rooms`. Most other missing values were removed with the removal of the erroneous room data, i.e., most rows that had missing values in other variable before the data cleaning were removed anyways as part of the data cleaning process displayed in the figure above. A potential reason for this correlation in missingness is a malfunction in the web scraper, where a faulty page load or incorrectly defined HTML tags corrupt the collection of an entire listing. However, as we can see from the change in sample size throughout data cleaning, this only affected a minority of the data. To cope with the missing data in rooms, I encode "missing" as a separate category to potentially identify characteristics of listings with no given number of rooms later in the modeling phase.
 
@@ -66,22 +64,22 @@ The model assessment plots (*Appendix B*) provide further evidence for the claim
 
 ## Hierarchical Linear Model
 Since the price is expected to vary heavily by geographical area, it makes sense to include the location of a listing in the model. The location for this data set can only be determined on a zip code level, however, this should suffice to tell apart cheap from expensive neighborhoods as zip code ares in Berlin are rather small. Thus, I construct the same linear model as described above (including the significant interaction term), but this time add the zip code as a level of random intercept. This way, each zip code area is allowed to have a different "baseline price" from which apartment features determine the final price. As part of the modeling process I also experimented with using random slopes for the `square_meters` variable but was unable to find a model that converges.
-The coefficients for both models are mostly similar to the ones of the non-hierarchical models in sign and magnitude. For example, `private_offer = TRUE` is associated with a decrease in $\log(price)$ for both rentals and sales and the coefficients do not differ much. The opposite holds true for `object_type = HOUSE`: While for rentals both the hierarchical and non-hierarchical model find a strongly positive relationship with $\log(price)$, for objects for sale, `object_type = HOUSE` is associated with a *decrease* in price in both the hierarchical and non-hierarchical model.  
+The coefficients for both models (*Appendix D*) are mostly similar to the ones of the non-hierarchical models in sign and magnitude. For example, `private_offer = TRUE` is associated with a decrease in $\log(price)$ for both rentals and sales and the coefficients do not differ much. The opposite holds true for `object_type = HOUSE`: While for rentals both the hierarchical and non-hierarchical model find a strongly positive relationship with $\log(price)$, for objects for sale, `object_type = HOUSE` is associated with a *decrease* in price in both the hierarchical and non-hierarchical model. Furthermore, objects with missing rooms seem to be cheaper than one bedrooms for rentals, but significantly more expensive for sales.  
 Despite the general relationships between dependent variable and predictor being the same, we can illustrate the importance of location in an example: Take for example two hypothetical rental properties with `object_type = Apartment`, `private_offer = False`, `rooms = 3`, and `square_meters = 65`. The hierarchical model's prediction for zip code 13059 is 458.95 EUR while for zip code 10117 it is 1101.85 EUR. Consequently, the neighborhood of a listing has a severe effect on pricing.  
 The random intercepts by zip code are can also be visualized on a geographic map, where grey indicates non-significant random intercepts. The model has clearly learned that areas close to the city center ("Mitte") are more expensive than the outskirts of Berlin (with some exceptions) and that cheaper rentals can generally be found in the north-east and north-west parts of Berlin.  
 
-### ![Map of Random Intercepts by zip code](plots/geoplot_rentals_and_sales.png)
+![](plots/geoplot_rentals_and_sales.png)
 
 To further analyse how the distance from the city center affects the random intercept and therefore the predicted price of the listing, the following plot graphs the geographical distance of each zip code area to the city center against its random intercept. Generally speaking, we see a negative linear relationship, where zip code areas that are far from the city center tend to be less expensive. However, we can also see that some zip codes are especially cheap (or expensive) given their distance from the center. Highlighted in red (expensive) and green (cheap) are the points with the top 2.5% largest absolute difference from a best-fit linear model in either direction (where the linear model regresses the multiplicative price effect on the distance to the city center). The plot indicates that zip codes like 13627 or 13355 are relatively cheap considering their distance to the city center.
 
-### ![Distance to Mitte vs. multiplicative price effect](plots/dist_to_mitte.png)
+![](plots/dist_to_mitte.png)
 
 # Conclusion
-This analysis highlighted which features of real estate are associated with the rental and sales prices. Based on data scraped from major online real estate market places, I used a hierarchical linear model to explain the relationship between price and object characteristics. While the object size is a major driver of price, the models show that temporary living objects are associated with a significant surcharge in rental price. Budget concious individuals might try to rent or buy from private offerers instead of commercial entities, as they offer significantly cheaper prices on these platforms for both rentals and sales. Moreover, full houses are significantly more expensive than apartments for renting, but cheaper for buying when all other attributes are held constant.
-The analysis is subject to several limitations. First, the data contain some outliers, which make the models violate some of their respective assumptions (but considering their influence values, should not bias coefficients too much). Moreover, the real estate market is subject to other macro factors like interest rates and general economic sentiment.
-Future research could also consider the data that was discarded for the purpose of this project, e.g., the full-text title and object description. These contain rich information that might affect price, for example if a property is in a quite neighborhood or close to infrastructure like schools and public transit.
+This analysis highlighted which features of real estate are associated with the rental and sales prices. Based on data scraped from major online real estate market places, I used a hierarchical linear model to explain the relationship between price and object characteristics. While the object size is a major driver of price, the models show that temporary living objects are associated with a significant surcharge in rental price. Budget conscious individuals might try to rent or buy from private offerers instead of commercial entities, as they offer significantly cheaper prices on these platforms for both rentals and sales. Moreover, full houses are significantly more expensive than apartments for renting, but cheaper for buying when all other attributes are held constant. Finally, using the interpretation of random intercepts of the hierarchical model, the report highlighted special zip code areas in which one might be more likely to find "bargains" considering their proximity to the city center.  
 
-- use free text heading & description
+The analysis is subject to several limitations. First, the data contain some outliers, which make the models violate some of their respective assumptions (but considering their influence values, should not bias coefficients too much). Moreover, the real estate market is subject to other macro factors like interest rates and general economic sentiment.
+Future research could also consider the data that was discarded for the purpose of this project, e.g., the full-text title and object description. These contain rich information that might affect price, for example if a property is in a quite neighborhood or close to infrastructure like schools and public transit. In fact, such details could be valuable predictors for the model but might take significant effort to collect as they are not usually listed with a property.
+
 
 \newpage
 # Appendix
@@ -101,7 +99,7 @@ Future research could also consider the data that was discarded for the purpose 
 ### ![](plots/assessment_sales_model2.png)
 
 \newpage
-## (B) Coefficients for non-hierarchical linear model
+## (C) Coefficients for non-hierarchical linear model
 ### Rentals
 \input{"scripts_output/rentals_model1_summary.tex"}
 
@@ -109,7 +107,7 @@ Future research could also consider the data that was discarded for the purpose 
 \input{"scripts_output/sales_model1_summary.tex"}
 
 \newpage
-## (C) Coefficients for hierarchical linear model
+## (D) Coefficients for hierarchical linear model
 ### Rentals
 \input{"scripts_output/rentals_model2_summary.tex"}
 
